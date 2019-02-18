@@ -1,0 +1,6 @@
+/Debug/
+/Release/
+
+# IDEA user specific project files
+.idea/workspace.xml
+.idea/tasks.xml

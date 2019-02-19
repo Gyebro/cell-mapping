@@ -22,6 +22,7 @@ namespace cm {
         IDType periodicGroups;
         std::vector<IDType> periodicities;
         void hsv2rgb(double h, double s, double v, double& r, double& g, double& b) const {
+            h *= 6.0; // Span to 360 deg.
             double c = v * s;
             double x = c * (1.0 - fabs(fmod(h, 2.0)-1.0));
             r = g = b = 0.0;
@@ -79,13 +80,18 @@ namespace cm {
             periodicGroups = 0;
             periodicities.resize(0);
         }
-        void solve() {
+        void solve(IDType max_steps = 1) {
             // Calculate images
             std::cout << "Initializing Cell state space with " << css.getCellSum() << " cells\n";
 #pragma omp parallel for
             for (IDType i=1; i<css.getCellSum(); i++) {
-                StateVectorType imageState = systemPointer->step(css.getCenter(i));
-                IDType image = css.getID(imageState);
+                IDType steps = 0; IDType image = i;
+                StateVectorType imageState = css.getCenter(i);
+                while (image == i && steps < max_steps) {
+                    imageState = systemPointer->step(imageState);
+                    image = css.getID(imageState);
+                    steps++;
+                }
                 css.setImage(i, image);
             }
             // Determine cell evolutions for cells
@@ -205,10 +211,8 @@ namespace cm {
             cinfo.in_color_space   = JCS_RGB;
 
             jpeg_set_defaults(&cinfo);
-            // Set the quality [0..100]
-            jpeg_set_quality (&cinfo, 100, true);
+            jpeg_set_quality (&cinfo, 100, true); // Set the quality [0..100]
             jpeg_start_compress(&cinfo, true);
-            // Write the image here
             JSAMPROW row_pointer;
             // TODO: Parallelize this too!
             while (cinfo.next_scanline < cinfo.image_height) {

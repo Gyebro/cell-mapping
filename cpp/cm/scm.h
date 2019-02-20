@@ -96,7 +96,7 @@ namespace cm {
             }
             // Determine cell evolutions for cells
             IDType z,p,s;
-            bool processing = false;
+            bool processing;
             std::vector<IDType> sequence;
             std::vector<IDType> currentPG;
             for (IDType i = 0; i < css.getCellSum(); i++) {
@@ -167,7 +167,7 @@ namespace cm {
             std::cout << "Number of PGs: " << periodicGroups << std::endl;
         }
         void printSummary();
-        void generateImage(std::string filepath) {
+        void generateImage(std::string filepath, IDType x0=0, IDType y0=0, IDType xw=0, IDType yw=0) {
             std::cout << "Generating JPG: " << filepath << std::endl;
             // TODO: Coordinate values for other dimensions!
             // TODO: Interface for accessing a plane from CellStateSpace
@@ -177,25 +177,25 @@ namespace cm {
             }
             struct jpeg_compress_struct cinfo;
             struct jpeg_error_mgr       jerr;
-            size_t xpixels = css.getCellCounts()[0];
-            size_t ypixels = css.getCellCounts()[1];
+            if (xw == 0) xw = css.getCellCounts()[0];
+            if (yw == 0) yw = css.getCellCounts()[1];
             size_t components = 3; // RGB
             // TODO: Use only line buffers (generate and save on-the-fly)
             char *buffer;
-            buffer = new char[xpixels*ypixels*components];
+            buffer = new char[xw*yw*components];
             size_t buff_p;
             std::vector<IDType> cellCoord(2);
             IDType id;
-            for (size_t i=0; i<ypixels; i++) {
-                for (size_t j=0; j<xpixels; j++) {
+            for (size_t i=0; i<yw; i++) {
+                for (size_t j=0; j<xw; j++) {
                     // TODO: Use input dimensions here!!!
-                    cellCoord[0]=j;
-                    cellCoord[1]=ypixels-1-i;
+                    cellCoord[0]=x0+j;
+                    cellCoord[1]=y0+yw-1-i;
                     id = css.getIDFromCellCoord(cellCoord);
                     size_t g = css.getGroup(id);
                     size_t s = css.getStep(id);
                     std::vector<char> rgb = createRGBColor(g,s); // TODO: Add coloringmethod
-                    buff_p = (i*xpixels+j)*components;
+                    buff_p = (i*xw+j)*components;
                     buffer[buff_p]	= rgb[0];
                     buffer[buff_p+1]= rgb[1];
                     buffer[buff_p+2]= rgb[2];
@@ -205,8 +205,8 @@ namespace cm {
             cinfo.err = jpeg_std_error(&jerr);
             jpeg_create_compress(&cinfo);
             jpeg_stdio_dest(&cinfo, outfile);
-            cinfo.image_width      = (JDIMENSION) xpixels;
-            cinfo.image_height     = (JDIMENSION) ypixels;
+            cinfo.image_width      = (JDIMENSION) xw;
+            cinfo.image_height     = (JDIMENSION) yw;
             cinfo.input_components = (int) components;
             cinfo.in_color_space   = JCS_RGB;
 
@@ -216,7 +216,7 @@ namespace cm {
             JSAMPROW row_pointer;
             // TODO: Parallelize this too!
             while (cinfo.next_scanline < cinfo.image_height) {
-                row_pointer = (JSAMPROW) &buffer[cinfo.next_scanline*components*xpixels];
+                row_pointer = (JSAMPROW) &buffer[cinfo.next_scanline*components*xw];
                 jpeg_write_scanlines(&cinfo, &row_pointer, 1);
             }
             jpeg_finish_compress(&cinfo);

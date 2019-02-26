@@ -16,12 +16,11 @@ int main() {
 
     vec2 center = {0, 0};
     vec2 width  = {2400, 50};
-    vector<uint32_t> cells = {100000, 40000};
+    vector<uint32_t> cells = {1000, 400};
 
     SCM<SCMCell<uint32_t>, uint32_t, vec2> scm(center, width, cells, &system);
     scm.solve(20);
-    scm.generateImage("scm00.jpg", 0, 0, cells[0]/2);
-    scm.generateImage("scm01.jpg", cells[0]/2, 0, cells[0]/2);
+    scm.generateImage("scm-microchaos.jpg");
 
     return 0;
 }

@@ -60,11 +60,11 @@ namespace cm {
                 v=1.0;
                 s=0.0; // White
             }
-            if (group == 0) {
+            /*if (group == 0) {
                 // Override for sink cell
                 v=1.0;
                 s=0.0;
-            }
+            }*/
             double r, g, b;
             hsv2rgb(h, s, v, r, g, b);
             std::vector<char> rgb;

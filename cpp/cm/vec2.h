@@ -46,4 +46,6 @@ vec2 operator+(const vec2& l, const vec2& r);
 
 vec2 operator-(const vec2& l, const vec2& r);
 
+double norm(const vec2& v);
+
 #endif //CELL_MAPPING_CPP_VEC2_H

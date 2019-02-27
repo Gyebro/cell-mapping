@@ -1,1 +1,1 @@
-cmake --build cmake-build-release --target demo -- -j 4
+cmake --build cmake-build-release --target all-demos -- -j 4

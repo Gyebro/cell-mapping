@@ -1,7 +1,3 @@
-//
-// Created by Gyebro on 2019-02-18.
-//
-
 #include "vec2.h"
 #include <algorithm>
 #include <iterator>

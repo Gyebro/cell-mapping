@@ -1,10 +1,5 @@
-//
-// Created by Gyebro on 2019-02-26.
-//
-
 #ifndef CELL_MAPPING_CPP_RK45_H
 #define CELL_MAPPING_CPP_RK45_H
-
 
 #include <cstdio>
 
@@ -82,6 +77,5 @@ namespace cm {
     };
 
 }
-
 
 #endif //CELL_MAPPING_CPP_RK45_H

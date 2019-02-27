@@ -1,7 +1,3 @@
-//
-// Created by Gyebro on 2019-02-13.
-//
-
 #ifndef CELL_MAPPING_CPP_CELL_H
 #define CELL_MAPPING_CPP_CELL_H
 
@@ -72,6 +68,5 @@ namespace cm {
      };
 
 }
-
 
 #endif //CELL_MAPPING_CPP_CELL_H

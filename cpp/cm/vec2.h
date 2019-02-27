@@ -1,7 +1,3 @@
-//
-// Created by Gyebro on 2019-02-18.
-//
-
 #ifndef CELL_MAPPING_CPP_VEC2_H
 #define CELL_MAPPING_CPP_VEC2_H
 

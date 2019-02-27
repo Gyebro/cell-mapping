@@ -1,7 +1,3 @@
-//
-// Created by Gyebro on 2019-02-27.
-//
-
 #ifndef CELL_MAPPING_CPP_COLORING_H
 #define CELL_MAPPING_CPP_COLORING_H
 
@@ -101,7 +97,6 @@ namespace cm {
         }
     };
 }
-
 
 
 #endif //CELL_MAPPING_CPP_COLORING_H

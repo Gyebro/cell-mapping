@@ -1,7 +1,3 @@
-//
-// Created by Gyebro on 2019-02-13.
-//
-
 #ifndef CELL_STATE_SPACE_H
 #define CELL_STATE_SPACE_H
 

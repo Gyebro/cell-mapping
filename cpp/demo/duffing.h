@@ -24,7 +24,6 @@ private:
     double delta;
     double omega;
     double dt;
-    double twopi = 6.283185307179586476925286766559;
 public:
     DuffingOscillator(double alpha, double beta, double gamma, double delta, double omega, double timestep) : alpha(
             alpha), beta(beta), gamma(gamma), delta(delta), omega(omega) {
@@ -41,8 +40,12 @@ public:
     }
     vec2 step(const vec2 &state) const override {
         // Use RK45 to integrate the system scheme
-        cm::RK45<vec2,DuffingOscillator> rk45(this, 1e-6);
-        return rk45.step(state, 0, twopi/omega, dt);
+        cm::RK45<vec2,DuffingOscillator> rk45(this, 1e-8);
+        return rk45.step(state, 0, dt, dt/50.0);
+    }
+
+    void setGamma(double gamma) {
+        DuffingOscillator::gamma = gamma;
     }
 
 };

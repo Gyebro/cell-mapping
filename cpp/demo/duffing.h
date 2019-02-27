@@ -1,7 +1,3 @@
-//
-// Created by Gyebro on 2019-02-26.
-//
-
 #ifndef CELL_MAPPING_CPP_DUFFING_H
 #define CELL_MAPPING_CPP_DUFFING_H
 
@@ -49,6 +45,5 @@ public:
     }
 
 };
-
 
 #endif //CELL_MAPPING_CPP_DUFFING_H

@@ -1,7 +1,3 @@
-//
-// Created by Gyebro on 2019-02-18.
-//
-
 #include "microchaos.h"
 #include <cmath>
 

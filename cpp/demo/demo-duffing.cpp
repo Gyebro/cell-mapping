@@ -1,7 +1,3 @@
-//
-// Created by Gyebro on 2019-02-26.
-//
-
 #include "cmlib.h"
 #include "duffing.h"
 
@@ -27,10 +23,10 @@ int main() {
 
     vector<double> gammas = {0.28, 0.29, 0.37, 0.5};
 
-    for (double gamma : gammas) {
-        duffing.setGamma(gamma);
+    for (double g : gammas) {
+        duffing.setGamma(g);
         scm.solve(20);
-        scm.generateImage("scm-duffing-gamma="+to_string(gamma)+".jpg", &coloringMethod);
+        scm.generateImage("scm-duffing-gamma="+to_string(g)+".jpg", &coloringMethod);
     }
 
     return 0;

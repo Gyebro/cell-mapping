@@ -8,15 +8,35 @@
 namespace cm {
 
     /**
-     * \class CellStateSpace
-     * Base class for classes describing state space discretization
+     * Base class for classes describing state space discretization.
+     *
+     * This is an abstract class describing a simple interface for cell state spaces.
+     * Every derived CellStateSpace class should implement two query functions:
+     * getCell: to return a state space cell based on its unique ID
+     * getCellAtState: to return a state space cell which corresponds to a given point in the state space
+     *
+     * @tparam CellType type of the used cell.
+     * @tparam IDType type of the ID of the cells (typically 32 or 64-bit unsigned integers).
+     * @tparam StateVectorType type of the state vector corresponding to the state space.
      */
     template <class CellType, class IDType, class StateVectorType>
     class CellStateSpaceBase {
     public:
+        /**
+         * Returns the cell corresponding to a point in the state space (const)
+         */
         virtual const CellType& getCellAtState(const StateVectorType& state) const = 0;
+        /**
+         * Returns the cell corresponding to a point in the state space
+         */
         virtual CellType& getCellAtState(const StateVectorType& state) = 0;
+        /**
+         * Returns the cell with the given ID (const)
+         */
         virtual const CellType& getCell(const IDType id) const = 0;
+        /**
+         * Returns the cell with the given ID
+         */
         virtual CellType& getCell(const IDType id) = 0;
         virtual const StateVectorType& getCenter() const = 0;
         virtual const StateVectorType& getWidth() const = 0;

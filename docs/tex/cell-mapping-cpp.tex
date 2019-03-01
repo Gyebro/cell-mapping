@@ -83,19 +83,26 @@ Alternatively, one can use an Integrate Development environment which supports \
 
 \subsection{Cloning the repository and building the demonstrations}
 
-Cloning the repository can be done with git:\\
-\texttt{git clone https://github.com/Gyebro/cell-mapping.git}\\
-Or alternatively, by simply  \href{https://github.com/Gyebro/cell-mapping/archive/master.zip}{downloading the repository as a zip archive}.
+Cloning the \href{https://github.com/Gyebro/cell-mapping.git}{\texttt{CMlib} repository} can be done with git, or alternatively, by simply  \href{https://github.com/Gyebro/cell-mapping/archive/master.zip}{downloading the repository as a zip archive}.
 
 The top level \texttt{CMakeLists.txt} file can be found in the \texttt{cell-mapping/cpp} folder. For convenience, scripts for reloading the CMake project (\texttt{reload-project-*} files) and building the demonstrations (\texttt{build-demo-*} files) are provided.
 
 In order to build the demonstrations on Windows in Release mode, run:\\
-\texttt{reload-project-release.bat}, followed by\\
-\texttt{build-demo-release.bat}.
-
+\texttt{reload-project-release.bat}, followed by \texttt{build-demo-release.bat}. 
 To build on Linux, use the same files with \texttt{.sh} extension.
 
 After building, demonstration executables can be found in the \texttt{cmake-build-release/demo} folder.
+
+Command line summary:\\
+\begin{tabular}{l|l}
+		\texttt{git clone https://github.com/Gyebro/cell-mapping.git} & Clone the repository \\
+		\texttt{cd cell-mapping/cpp} & Change to project dir \\
+		\texttt{reload-project-release.bat} & Reload project in Release\\
+		\texttt{build-demo-release.bat} & Build demonstrations\\
+		\texttt{cd cmake-build-release/demo} & Change to build dir\\
+		\texttt{demo-pendulum} & Run the pendulum demo
+\end{tabular}
+
 
 \section{Examples}
 
@@ -132,7 +139,15 @@ class Pendulum : public cm::DynamicalSystemBase<vec2>  {
 };
 \end{lstlisting}
 
-The \texttt{DynamicalSystemBase} class requires a \texttt{step} function which can be used to track trajectories of the system. In order to generate a solution, the \texttt{RK45} template integrator can be used (see lines 17-18). To use the solver,  the function \texttt{f(y0, t)} needs to be implemented in the \texttt{Pendulum} class which describes the right-hand side of the system written as a set of first order differential equations (see lines 11-12). Note: \texttt{vec2} is a simple 2-element vector type provided by the library.
+The \texttt{DynamicalSystemBase} class requires a \texttt{step} function which can be used to track trajectories of the system. In order to generate a solution, the \texttt{RK45} template integrator can be used (see lines 17-18). To use the solver,  the function \texttt{f(y0, t)} needs to be implemented in the \texttt{Pendulum} class which describes the right-hand side of the system written as a set of first order differential equations (see lines 11-12). Note: \texttt{vec2} is a simple 2-element vector type provided by the library.\\
+
+In order to execute SCM on the \texttt{Pendulum} system, the center, width and cell counts of the state space along state-space dimensions should be defined. In \texttt{CMlib}, the state space region of interest is defined by its center point and its width according to Figure.~\ref{fig:statespace}.
+
+\begin{figure}[htb]
+	\centering
+	\includegraphics[width=10cm]{fig/state-space-region.pdf}
+	\caption{The definition of state space region in $(x,x')$ based on its center $\mathbf{c}$ and width $\mathbf{w}$ with cell count vector $\mathbf{z}$.} \label{fig:statespace}
+\end{figure}
 
 \begin{lstlisting}
 int main() {
@@ -148,9 +163,7 @@ int main() {
  return 0;
 }
 \end{lstlisting}
-In order to execute SCM on the \texttt{Pendulum} system, the center, width and cell counts of the state space along state-space dimensions are defined. The \texttt{SCM32<StateVectorType>} class' template parameter in this case is \texttt{vec2} as the \texttt{Pendulum} used that type for the state vector. Note: \texttt{SCM32} is a type definition for \texttt{SCM<SCMCell<uint32\_t>, uint32\_t, StateVectorType>} meaning, that the addressing of cells are done with 32-bit unsigned integers. If your state space contains more than $2^{32}-1 = 4\,\mathrm{GCells}$, use \texttt{SCM64} instead.
-
-\newpage
+The \texttt{SCM32<StateVectorType>} class' template parameter in this case is \texttt{vec2} as the \texttt{Pendulum} used that type for the state vector. Note: \texttt{SCM32} is a type definition for \texttt{SCM<SCMCell<uint32\_t>, uint32\_t, StateVectorType>} meaning, that the addressing of cells are done with 32-bit unsigned integers. If your state space contains more than $2^{32}-1 = 4\,\mathrm{GCells}$, use \texttt{SCM64} instead.
 
 After running this example program, the following output is generated:
 

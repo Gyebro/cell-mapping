@@ -178,6 +178,12 @@ namespace cm {
         }
     };
 
+    template <class StateVectorType>
+    using SCM32 = SCM<SCMCell<uint32_t>, uint32_t, StateVectorType>;
+
+    template <class StateVectorType>
+    using SCM64 = SCM<SCMCell<uint64_t>, uint64_t, StateVectorType>;
+
 }
 
 

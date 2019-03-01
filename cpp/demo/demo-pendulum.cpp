@@ -15,7 +15,7 @@ int main() {
     vec2 width  = {16.0*M_PI, 10.0};
     vector<uint32_t> cells = {1400, 800};
 
-    SCM<SCMCell<uint32_t>, uint32_t, vec2> scm(center, width, cells, &pendulum);
+    SCM32<vec2> scm(center, width, cells, &pendulum);
     scm.solve(20);
     scm.generateImage("pendulum.jpg");
 

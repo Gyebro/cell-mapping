@@ -3,6 +3,8 @@ var searchData=
   ['scm',['SCM',['../classcm_1_1_s_c_m.html',1,'cm::SCM&lt; CellType, IDType, StateVectorType &gt;'],['../classcm_1_1_s_c_m.html#a8af8429197de297ce682da77c0a8ffeb',1,'cm::SCM::SCM()']]],
   ['scm_2ecpp',['scm.cpp',['../scm_8cpp.html',1,'']]],
   ['scm_2eh',['scm.h',['../scm_8h.html',1,'']]],
+  ['scm32',['SCM32',['../namespacecm.html#a85e4e774d8aae392a9678ef9d807e5b3',1,'cm']]],
+  ['scm64',['SCM64',['../namespacecm.html#a1ec918bd6e8cbbf22af500f06f6cef64',1,'cm']]],
   ['scmblackandwhitecoloring',['SCMBlackAndWhiteColoring',['../classcm_1_1_s_c_m_black_and_white_coloring.html',1,'cm']]],
   ['scmcell',['SCMCell',['../classcm_1_1_s_c_m_cell.html',1,'cm::SCMCell&lt; IDType &gt;'],['../classcm_1_1_s_c_m_cell.html#a96634b2d5c134edc785caf0c5960533e',1,'cm::SCMCell::SCMCell()']]],
   ['scmcoloringmethod',['SCMColoringMethod',['../classcm_1_1_s_c_m_coloring_method.html',1,'cm']]],

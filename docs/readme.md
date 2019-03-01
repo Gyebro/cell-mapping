@@ -18,6 +18,13 @@ CMlib is a C++ library for generating cell mapping solutions, including the foll
 
 The library uses templates in order to allow users to use the data types, differential equation solvers, etc. of their liking.
 
+Documentation
+-------------
+
+A short guide to `CMlib` can be found here: [cell-mapping-cpp.pdf](https://github.com/Gyebro/cell-mapping/blob/master/docs/tex/cell-mapping-cpp.pdf)
+Doxygen generated documentation can be found here: [gyebro.github.io/cell-mapping](https://gyebro.github.io/cell-mapping/)
+
+
 Example usage
 ------------------------
 
@@ -51,6 +58,6 @@ Then execute Simple Cell Mapping:
 
 Upon successful execution the resulting output and image will describe objects in the analysed state space region.
 
-![SCM solution of the Pendulum system](../tex/fig/pendulum.jpg "SCM solution of the Pendulum system")
+![SCM solution of the Pendulum system](https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/pendulum.jpg "SCM solution of the Pendulum system")
 
 Coloured regions indicate domains of attraction of stable equilibria -- fixed points

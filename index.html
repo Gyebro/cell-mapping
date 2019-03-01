@@ -107,6 +107,8 @@ $(document).ready(function(){initNavTree('index.html','');});
 <li>Generalized Cell Mapping (GCM)</li>
 </ul>
 <p>The library uses templates in order to allow users to use the data types, differential equation solvers, etc. of their liking.</p>
+<h2>Documentation </h2>
+<p>A short guide to <code>CMlib</code> can be found here: <a href="https://github.com/Gyebro/cell-mapping/blob/master/docs/tex/cell-mapping-cpp.pdf">cell-mapping-cpp.pdf</a> Doxygen generated documentation can be found here: <a href="https://gyebro.github.io/cell-mapping/">gyebro.github.io/cell-mapping</a></p>
 <h2>Example usage </h2>
 <p>First you need to include library header </p><pre class="fragment">#include "cmlib.h"
 #include "pendulum.h"
@@ -124,7 +126,7 @@ uint32_t max_steps = 20;
 scm.solve(max_steps); 
 scm.generateImage("pendulum.jpg");
 </pre><p>Upon successful execution the resulting output and image will describe objects in the analysed state space region.</p>
-<img src="../tex/fig/pendulum.jpg" alt="SCM solution of the Pendulum system" title="SCM solution of the Pendulum system" class="inline"/>
+<img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/pendulum.jpg" alt="SCM solution of the Pendulum system" title="SCM solution of the Pendulum system" class="inline"/>
 <p>Coloured regions indicate domains of attraction of stable equilibria &ndash; fixed points </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
@@ -132,7 +134,7 @@ scm.generateImage("pendulum.jpg");
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Mar 1 2019 01:30:14 for CMlib by
+    <li class="footer">Generated on Fri Mar 1 2019 10:49:04 for CMlib by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.15 </li>
   </ul>

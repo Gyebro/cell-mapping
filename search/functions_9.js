@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['vec2',['vec2',['../classvec2.html#ae12a1a221eca3561809600a11b58eaa3',1,'vec2::vec2()'],['../classvec2.html#a74d3d07a56e23dd8c1a1a179442f60e8',1,'vec2::vec2(std::initializer_list&lt; double &gt; l)']]]
+  ['uniformcellstatespace',['UniformCellStateSpace',['../classcm_1_1_uniform_cell_state_space.html#a91b77a89f60f9f5acbc6809ac4bb5231',1,'cm::UniformCellStateSpace']]]
 ];

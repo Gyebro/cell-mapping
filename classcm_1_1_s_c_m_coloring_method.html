@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.15"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>CMlib: cm::SCMColoringMethod&lt; IDType &gt; Class Template Reference</title>
+<title>CMlib: cm::SCMColoringMethod&lt; CellType, IDType &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -92,50 +92,51 @@ $(document).ready(function(){initNavTree('classcm_1_1_s_c_m_coloring_method.html
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classcm_1_1_s_c_m_coloring_method-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">cm::SCMColoringMethod&lt; IDType &gt; Class Template Reference</div>  </div>
+<div class="title">cm::SCMColoringMethod&lt; CellType, IDType &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
 <p><code>#include &lt;<a class="el" href="coloring_8h_source.html">coloring.h</a>&gt;</code></p>
 <div class="dynheader">
-Inheritance diagram for cm::SCMColoringMethod&lt; IDType &gt;:</div>
+Inheritance diagram for cm::SCMColoringMethod&lt; CellType, IDType &gt;:</div>
 <div class="dyncontent">
  <div class="center">
-  <img src="classcm_1_1_s_c_m_coloring_method.png" usemap="#cm::SCMColoringMethod_3C_20IDType_20_3E_map" alt=""/>
-  <map id="cm::SCMColoringMethod_3C_20IDType_20_3E_map" name="cm::SCMColoringMethod_3C_20IDType_20_3E_map">
-<area href="classcm_1_1_s_c_m_black_and_white_coloring.html" alt="cm::SCMBlackAndWhiteColoring&lt; IDType &gt;" shape="rect" coords="0,56,259,80"/>
-<area href="classcm_1_1_s_c_m_default_coloring.html" alt="cm::SCMDefaultColoring&lt; IDType &gt;" shape="rect" coords="269,56,528,80"/>
-<area href="classcm_1_1_s_c_m_heat_map_coloring.html" alt="cm::SCMHeatMapColoring&lt; IDType &gt;" shape="rect" coords="538,56,797,80"/>
+  <img src="classcm_1_1_s_c_m_coloring_method.png" usemap="#cm::SCMColoringMethod_3C_20CellType_2C_20IDType_20_3E_map" alt=""/>
+  <map id="cm::SCMColoringMethod_3C_20CellType_2C_20IDType_20_3E_map" name="cm::SCMColoringMethod_3C_20CellType_2C_20IDType_20_3E_map">
+<area href="classcm_1_1_clustered_s_c_m_default_coloring.html" alt="cm::ClusteredSCMDefaultColoring&lt; CellType, IDType &gt;" shape="rect" coords="0,56,327,80"/>
+<area href="classcm_1_1_s_c_m_black_and_white_coloring.html" alt="cm::SCMBlackAndWhiteColoring&lt; CellType, IDType &gt;" shape="rect" coords="337,56,664,80"/>
+<area href="classcm_1_1_s_c_m_default_coloring.html" alt="cm::SCMDefaultColoring&lt; CellType, IDType &gt;" shape="rect" coords="674,56,1001,80"/>
+<area href="classcm_1_1_s_c_m_heat_map_coloring.html" alt="cm::SCMHeatMapColoring&lt; CellType, IDType &gt;" shape="rect" coords="1011,56,1338,80"/>
   </map>
 </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a2dfd9eb45bf9c15b1f8d3cf036acd1a0"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; char &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_1_1_s_c_m_coloring_method.html#a2dfd9eb45bf9c15b1f8d3cf036acd1a0">createColor</a> (const <a class="el" href="classcm_1_1_s_c_m_cell.html">SCMCell</a>&lt; IDType &gt; &amp;cell, const std::vector&lt; std::vector&lt; IDType &gt;&gt; &amp;periodicGroups)</td></tr>
-<tr class="separator:a2dfd9eb45bf9c15b1f8d3cf036acd1a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c94cba72accc917ea611a214461de70"><td class="memItemLeft" align="right" valign="top">virtual std::vector&lt; char &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_1_1_s_c_m_coloring_method.html#a2c94cba72accc917ea611a214461de70">createColor</a> (const CellType &amp;cell, const IDType periodicGroups)</td></tr>
+<tr class="separator:a2c94cba72accc917ea611a214461de70"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a2dfd9eb45bf9c15b1f8d3cf036acd1a0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2dfd9eb45bf9c15b1f8d3cf036acd1a0">&#9670;&nbsp;</a></span>createColor()</h2>
+<a id="a2c94cba72accc917ea611a214461de70"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c94cba72accc917ea611a214461de70">&#9670;&nbsp;</a></span>createColor()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class IDType &gt; </div>
+template&lt;class CellType , class IDType &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual std::vector&lt;char&gt; <a class="el" href="classcm_1_1_s_c_m_coloring_method.html">cm::SCMColoringMethod</a>&lt; IDType &gt;::createColor </td>
+          <td class="memname">virtual std::vector&lt;char&gt; <a class="el" href="classcm_1_1_s_c_m_coloring_method.html">cm::SCMColoringMethod</a>&lt; CellType, IDType &gt;::createColor </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="classcm_1_1_s_c_m_cell.html">SCMCell</a>&lt; IDType &gt; &amp;&#160;</td>
+          <td class="paramtype">const CellType &amp;&#160;</td>
           <td class="paramname"><em>cell</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::vector&lt; std::vector&lt; IDType &gt;&gt; &amp;&#160;</td>
+          <td class="paramtype">const IDType&#160;</td>
           <td class="paramname"><em>periodicGroups</em>&#160;</td>
         </tr>
         <tr>
@@ -162,7 +163,7 @@ template&lt;class IDType &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="namespacecm.html">cm</a></li><li class="navelem"><a class="el" href="classcm_1_1_s_c_m_coloring_method.html">SCMColoringMethod</a></li>
-    <li class="footer">Generated on Fri Mar 1 2019 10:49:04 for CMlib by
+    <li class="footer">Generated on Tue Mar 5 2019 15:12:07 for CMlib by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.15 </li>
   </ul>

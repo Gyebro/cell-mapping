@@ -106,8 +106,18 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a3edc136e1032185022145d8c02751da9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58c0e692183ce79f211645219d410039"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_1_1_s_c_m.html#a58c0e692183ce79f211645219d410039">printSummary</a> ()</td></tr>
 <tr class="separator:a58c0e692183ce79f211645219d410039"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a694b5c6a6888fa2eef3ac3e26d1a432b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_1_1_s_c_m.html#a694b5c6a6888fa2eef3ac3e26d1a432b">generateImage</a> (std::string filepath, <a class="el" href="classcm_1_1_s_c_m_coloring_method.html">SCMColoringMethod</a>&lt; IDType &gt; *coloringMethod=nullptr, IDType x0=0, IDType y0=0, IDType xw=0, IDType yw=0)</td></tr>
-<tr class="separator:a694b5c6a6888fa2eef3ac3e26d1a432b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a775c8f8d77546cd52d0ec3fda26ff3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_1_1_s_c_m.html#a1a775c8f8d77546cd52d0ec3fda26ff3">generateImage</a> (std::string filepath, <a class="el" href="classcm_1_1_s_c_m_coloring_method.html">SCMColoringMethod</a>&lt; CellType, IDType &gt; *coloringMethod=nullptr, IDType x0=0, IDType y0=0, IDType xw=0, IDType yw=0)</td></tr>
+<tr class="separator:a1a775c8f8d77546cd52d0ec3fda26ff3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32eb3f742468fbcff40d6fd3c9a20585"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcm_1_1_dynamical_system_base.html">DynamicalSystemBase</a>&lt; StateVectorType &gt; *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_1_1_s_c_m.html#a32eb3f742468fbcff40d6fd3c9a20585">getSystemPointer</a> () const</td></tr>
+<tr class="separator:a32eb3f742468fbcff40d6fd3c9a20585"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac944baa28aef9df661e089760523304e"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classcm_1_1_s_c_m_uniform_cell_state_space.html">SCMUniformCellStateSpace</a>&lt; CellType, IDType, StateVectorType &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_1_1_s_c_m.html#ac944baa28aef9df661e089760523304e">getCss</a> () const</td></tr>
+<tr class="separator:ac944baa28aef9df661e089760523304e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86528929476cb6762e782bd0f28e407d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcm_1_1_s_c_m_uniform_cell_state_space.html">SCMUniformCellStateSpace</a>&lt; CellType, IDType, StateVectorType &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_1_1_s_c_m.html#a86528929476cb6762e782bd0f28e407d">getCss</a> ()</td></tr>
+<tr class="separator:a86528929476cb6762e782bd0f28e407d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a696487c9d997bb7c5bc291bbfe5f10c0"><td class="memItemLeft" align="right" valign="top">IDType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_1_1_s_c_m.html#a696487c9d997bb7c5bc291bbfe5f10c0">getPeriodicGroups</a> () const</td></tr>
+<tr class="separator:a696487c9d997bb7c5bc291bbfe5f10c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab98a964eef5b62b82972fcb02a225013"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcm_1_1_s_c_m.html#ab98a964eef5b62b82972fcb02a225013">setPeriodicGroups</a> (IDType periodicGroups)</td></tr>
+<tr class="separator:ab98a964eef5b62b82972fcb02a225013"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a8af8429197de297ce682da77c0a8ffeb"></a>
@@ -161,8 +171,8 @@ template&lt;class CellType, class IDType, class StateVectorType&gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a694b5c6a6888fa2eef3ac3e26d1a432b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a694b5c6a6888fa2eef3ac3e26d1a432b">&#9670;&nbsp;</a></span>generateImage()</h2>
+<a id="a1a775c8f8d77546cd52d0ec3fda26ff3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1a775c8f8d77546cd52d0ec3fda26ff3">&#9670;&nbsp;</a></span>generateImage()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -181,7 +191,7 @@ template&lt;class CellType, class IDType, class StateVectorType&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classcm_1_1_s_c_m_coloring_method.html">SCMColoringMethod</a>&lt; IDType &gt; *&#160;</td>
+          <td class="paramtype"><a class="el" href="classcm_1_1_s_c_m_coloring_method.html">SCMColoringMethod</a>&lt; CellType, IDType &gt; *&#160;</td>
           <td class="paramname"><em>coloringMethod</em> = <code>nullptr</code>, </td>
         </tr>
         <tr>
@@ -223,6 +233,114 @@ template&lt;class CellType, class IDType, class StateVectorType&gt; </div>
 
 </div>
 </div>
+<a id="ac944baa28aef9df661e089760523304e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac944baa28aef9df661e089760523304e">&#9670;&nbsp;</a></span>getCss() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class CellType, class IDType, class StateVectorType&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const <a class="el" href="classcm_1_1_s_c_m_uniform_cell_state_space.html">SCMUniformCellStateSpace</a>&lt;CellType, IDType, StateVectorType&gt;&amp; <a class="el" href="classcm_1_1_s_c_m.html">cm::SCM</a>&lt; CellType, IDType, StateVectorType &gt;::getCss </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a86528929476cb6762e782bd0f28e407d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a86528929476cb6762e782bd0f28e407d">&#9670;&nbsp;</a></span>getCss() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class CellType, class IDType, class StateVectorType&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classcm_1_1_s_c_m_uniform_cell_state_space.html">SCMUniformCellStateSpace</a>&lt;CellType, IDType, StateVectorType&gt;&amp; <a class="el" href="classcm_1_1_s_c_m.html">cm::SCM</a>&lt; CellType, IDType, StateVectorType &gt;::getCss </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a696487c9d997bb7c5bc291bbfe5f10c0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a696487c9d997bb7c5bc291bbfe5f10c0">&#9670;&nbsp;</a></span>getPeriodicGroups()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class CellType, class IDType, class StateVectorType&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">IDType <a class="el" href="classcm_1_1_s_c_m.html">cm::SCM</a>&lt; CellType, IDType, StateVectorType &gt;::getPeriodicGroups </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a32eb3f742468fbcff40d6fd3c9a20585"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a32eb3f742468fbcff40d6fd3c9a20585">&#9670;&nbsp;</a></span>getSystemPointer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class CellType, class IDType, class StateVectorType&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classcm_1_1_dynamical_system_base.html">DynamicalSystemBase</a>&lt;StateVectorType&gt;* <a class="el" href="classcm_1_1_s_c_m.html">cm::SCM</a>&lt; CellType, IDType, StateVectorType &gt;::getSystemPointer </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a58c0e692183ce79f211645219d410039"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a58c0e692183ce79f211645219d410039">&#9670;&nbsp;</a></span>printSummary()</h2>
 
@@ -238,6 +356,34 @@ template&lt;class CellType, class IDType, class StateVectorType&gt; </div>
           <td></td>
         </tr>
       </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab98a964eef5b62b82972fcb02a225013"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab98a964eef5b62b82972fcb02a225013">&#9670;&nbsp;</a></span>setPeriodicGroups()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class CellType, class IDType, class StateVectorType&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classcm_1_1_s_c_m.html">cm::SCM</a>&lt; CellType, IDType, StateVectorType &gt;::setPeriodicGroups </td>
+          <td>(</td>
+          <td class="paramtype">IDType&#160;</td>
+          <td class="paramname"><em>periodicGroups</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 </div>
@@ -279,7 +425,7 @@ template&lt;class CellType, class IDType, class StateVectorType&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="namespacecm.html">cm</a></li><li class="navelem"><a class="el" href="classcm_1_1_s_c_m.html">SCM</a></li>
-    <li class="footer">Generated on Fri Mar 1 2019 10:49:04 for CMlib by
+    <li class="footer">Generated on Tue Mar 5 2019 15:12:07 for CMlib by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.15 </li>
   </ul>

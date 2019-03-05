@@ -5,6 +5,11 @@ var dir_05cb04e645df8956f2689d461733bb06 =
     [ "cmlib.h", "cmlib_8h.html", null ],
     [ "coloring.cpp", "coloring_8cpp.html", "coloring_8cpp" ],
     [ "coloring.h", "coloring_8h.html", "coloring_8h" ],
+    [ "cscm.cpp", "cscm_8cpp.html", null ],
+    [ "cscm.h", "cscm_8h.html", [
+      [ "CellTree", "classcm_1_1_cell_tree.html", "classcm_1_1_cell_tree" ],
+      [ "ClusteredSCM", "classcm_1_1_clustered_s_c_m.html", "classcm_1_1_clustered_s_c_m" ]
+    ] ],
     [ "css.cpp", "css_8cpp.html", null ],
     [ "css.h", "css_8h.html", [
       [ "CellStateSpaceBase", "classcm_1_1_cell_state_space_base.html", "classcm_1_1_cell_state_space_base" ],

@@ -127,14 +127,31 @@ scm.solve(max_steps);
 scm.generateImage("pendulum.jpg");
 </pre><p>Upon successful execution the resulting output and image will describe objects in the analysed state space region.</p>
 <img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/pendulum.jpg" alt="SCM solution of the Pendulum system" title="SCM solution of the Pendulum system" class="inline"/>
-<p>Coloured regions indicate domains of attraction of stable equilibria &ndash; fixed points </p>
+<p>Coloured regions indicate domains of attraction of stable equilibria &ndash; fixed points</p>
+<h2>Clustered SCM example </h2>
+<p>The <code>ClusteredSCM</code> class can be used to join two (or more) SCM solutions and create a cluster of solutions, which can be extended by additional solutions on demand. This allows continuation of SCM towards state-space regions where trajectories escape to the sink cell, and also makes parallel execution of SCM on separate state-space regions possible. </p><pre class="fragment">SCM&lt;ClusterableSCMCell&lt;uint32_t&gt;, uint32_t, vec2&gt; scm1(center, width, cells, &amp;system);
+scm1.solve(20);
+scm1.generateImage("scm1_initial.jpg");
+vec2 center2 = center + vec2({width[0], 0});
+SCM&lt;ClusterableSCMCell&lt;uint32_t&gt;, uint32_t, vec2&gt; scm2(center2, width, cells, &amp;system);
+scm2.solve(20);
+scm2.generateImage("scm2_initial.jpg");
+</pre><p>As an example, consider the left SCM solution, which will be extended with a new region (right SCM solution). The following figures show the initial SCM solutions on these two state-space regions:</p>
+<img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm1_initial.jpg" width="49%" alt="" class="inline"/>
+<img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm2_initial.jpg" width="49%" alt="" class="inline"/>
+<p>Joining these solutions can be done with: </p><pre class="fragment">ClusteredSCM&lt;ClusterableSCMCell&lt;uint32_t&gt;, uint32_t, vec2&gt; cscm(&amp;scm1, &amp;scm2);
+cscm.join(true); // Bool argument controls output image generation
+</pre><p>After the procedure is completed, the following outputs can be observed:</p>
+<img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm1_joined.jpg" width="49%" alt="" class="inline"/>
+<img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm2_joined.jpg" width="49%" alt="" class="inline"/>
+<p>Note, that in this particular example, some periodic groups are at the boundary line between the two state-space regions and they are also discovered by the C-SCM method. </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Mar 1 2019 10:49:04 for CMlib by
+    <li class="footer">Generated on Tue Mar 5 2019 15:12:08 for CMlib by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.15 </li>
   </ul>

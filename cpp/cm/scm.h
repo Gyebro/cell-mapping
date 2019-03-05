@@ -120,10 +120,10 @@ namespace cm {
             std::cout << "Number of PGs: " << periodicGroups << std::endl;
         }
         void printSummary();
-        void generateImage(std::string filepath, SCMColoringMethod<IDType>* coloringMethod=nullptr,
+        void generateImage(std::string filepath, SCMColoringMethod<CellType, IDType>* coloringMethod=nullptr,
                 IDType x0=0, IDType y0=0, IDType xw=0, IDType yw=0) {
             // Instantiate coloring method if not provided
-            SCMDefaultColoring<IDType> defaultColoring;
+            SCMDefaultColoring<CellType, IDType> defaultColoring;
             if (coloringMethod == nullptr) {
                 coloringMethod = &defaultColoring;
             }
@@ -150,7 +150,7 @@ namespace cm {
                     cellCoord[1]=y0+yw-1-i;
                     id = css.getIDFromCellCoord(cellCoord);
                     CellType cell = css.getCell(id);
-                    std::vector<char> rgb = coloringMethod->createColor(cell, periodicGroupIDs);
+                    std::vector<char> rgb = coloringMethod->createColor(cell, periodicGroups);
                     buff_p = (i*xw+j)*components;
                     buffer[buff_p]	= rgb[0];
                     buffer[buff_p+1]= rgb[1];
@@ -184,6 +184,12 @@ namespace cm {
         }
         SCMUniformCellStateSpace<CellType, IDType, StateVectorType> &getCss() {
             return css;
+        }
+        IDType getPeriodicGroups() const {
+            return periodicGroups;
+        }
+        void setPeriodicGroups(IDType periodicGroups) {
+            SCM::periodicGroups = periodicGroups;
         }
     };
 

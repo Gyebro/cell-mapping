@@ -176,6 +176,15 @@ namespace cm {
             }
             jpeg_finish_compress(&cinfo);
         }
+        DynamicalSystemBase<StateVectorType> *getSystemPointer() const {
+            return systemPointer;
+        }
+        const SCMUniformCellStateSpace<CellType, IDType, StateVectorType> &getCss() const {
+            return css;
+        }
+        SCMUniformCellStateSpace<CellType, IDType, StateVectorType> &getCss() {
+            return css;
+        }
     };
 
     template <class StateVectorType>

@@ -20,15 +20,23 @@ int main() {
 
     SCM<ClusterableSCMCell<uint32_t>, uint32_t, vec2> scm1(center, width, cells, &system);
     scm1.solve(20);
-    scm1.generateImage("scm1_st0.jpg");
 
     vec2 center2 = center + vec2({width[0], 0});
     SCM<ClusterableSCMCell<uint32_t>, uint32_t, vec2> scm2(center2, width, cells, &system);
     scm2.solve(20);
-    scm2.generateImage("scm2_st0.jpg");
 
     ClusteredSCM<ClusterableSCMCell<uint32_t>, uint32_t, vec2> cscm(&scm1, &scm2);
-    cscm.join(true);
+    bool verbose = true; // This will generate intermediate images
+    cscm.join(verbose);
+
+    // Create a full-size SCM for validation
+    cout << "\nValidation:\n";
+    vec2 center3 = center + vec2({width[0]/2, 0});
+    vec2 width3({width[0]*2, width[1]});
+    vector<uint32_t> cells3 = {cells[0]*2, cells[1]};
+    SCM<ClusterableSCMCell<uint32_t>, uint32_t, vec2> scm3(center3, width3, cells3, &system);
+    scm3.solve(20);
+    scm3.generateImage("scm1_2_validation.jpg");
 
 
     return 0;

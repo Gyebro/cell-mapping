@@ -19,7 +19,7 @@ int main() {
     vector<uint32_t> cells = {1000, 1000};
 
     SCM<SCMCell<uint32_t>, uint32_t, vec2> scm(center, width, cells, &duffing);
-    SCMBlackAndWhiteColoring<uint32_t> coloringMethod;
+    SCMBlackAndWhiteColoring<SCMCell<uint32_t>, uint32_t> coloringMethod;
 
     vector<double> gammas = {0.28, 0.29, 0.37, 0.5};
 

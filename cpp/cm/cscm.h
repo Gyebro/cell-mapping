@@ -291,28 +291,29 @@ namespace cm {
                                 //cout << "Known destination (cellpath) found, terminating cycle at cellTree: " << i << endl;
                             } else if (cpImageState == CellState::UnderProcessing) {
                                 // new periodic group found, tag all cells in the cycle
-                                // TODO: Assign new group number,
-                                size_t imageGroup = 4;
+                                // TODO: Create new group number for clusterID1
+                                size_t newGroup = scm1->getPeriodicGroups() + 1;
+                                scm1->setPeriodicGroups(newGroup);
                                 // Tag internal cells (in paths) as well, also set cmid to cmid1
                                 for (size_t k=0; k<cycle.size(); k++) {
                                     cellTrees[cycle[k]].setState(CellState::Processed);
                                     std::vector<IDType> cellsk = cellTrees[cycle[k]].getCells();
                                     if(cellTrees[cycle[k]].getClusterID() == cmid1) {
                                         for (size_t ck=0; ck<cellsk.size(); ck++) {
-                                            scm1->getCss().getCell(cellsk[ck]).setGroup(imageGroup);
+                                            scm1->getCss().getCell(cellsk[ck]).setGroup(newGroup);
                                             scm1->getCss().getCell(cellsk[ck]).setState(CellState::Processed);
                                             scm1->getCss().getCell(cellsk[ck]).setClusterID(cmid1);
                                         }
                                     } else {
                                         for (size_t ck=0; ck<cellsk.size(); ck++) {
-                                            scm2->getCss().getCell(cellsk[ck]).setGroup(imageGroup);
+                                            scm2->getCss().getCell(cellsk[ck]).setGroup(newGroup);
                                             scm2->getCss().getCell(cellsk[ck]).setState(CellState::Processed);
                                             scm2->getCss().getCell(cellsk[ck]).setClusterID(cmid1); // To have the same color
                                         }
                                     }
                                 }
                                 processing = false;
-                                std::cout << "New " << cycle.size() <<" PG found, terminating cycle at cellTree: " << i << std::endl;
+                                //std::cout << "New " << cycle.size() <<" PG found, terminating cycle at cellTree: " << i << std::endl;
                             }
                         }
                     }
@@ -321,11 +322,6 @@ namespace cm {
                     // This should not happen
                 }
             }
-            size_t processedPaths = 0;
-            for (size_t p=0; p < cellTrees.size(); p++) {
-                if(cellTrees[p].getState() == CellState::Processed) {processedPaths++;}
-            }
-            std::cout << "Processed cellTrees: " << processedPaths << std::endl;
         }
     public:
         ClusteredSCM(SCM<CellType, IDType, StateVectorType>* scm1p,
@@ -369,10 +365,12 @@ namespace cm {
             // Get the DoA of sink cell for both SCMs
             std::vector<IDType> sinkDoA1;
             std::vector<IDType> sinkDoA2;
+            if (verbose) std::cout << "\nInitialization: " << std::endl;
             size_t scm1count = scm1->getCss().getCellSum();
             size_t scm2count = scm2->getCss().getCellSum();
             IDType cmid1 = scm1->getCss().getCell(0).getClusterID();
             IDType cmid2 = scm2->getCss().getCell(0).getClusterID();
+            ClusteredSCMDefaultColoring<CellType, IDType> coloringMethod;
             if (cmid2 == cmid1) {
                 cmid2++;
         #pragma omp parallel for
@@ -397,10 +395,12 @@ namespace cm {
 
             size_t sinkCount = sinkDoA1.size() + sinkDoA2.size();
             if (verbose) {
-                std::cout << "SCM1's sink cell DoA size: " << sinkDoA1.size() << " cells." << std::endl;
-                std::cout << "SCM2's sink cell DoA size: " << sinkDoA2.size() << " cells." << std::endl;
-                std::cout << "CellState::UNTOUCHED: " << sinkCount << std::endl;
-                std::cout << "Stage 1" << std::endl;
+                std::cout << " SCM1's sink cell DoA contains: " << sinkDoA1.size() << " cells." << std::endl;
+                std::cout << " SCM2's sink cell DoA contains: " << sinkDoA2.size() << " cells." << std::endl;
+                std::cout << " Total number of cells in the joining procedure: " << sinkCount << std::endl;
+                //scm1->generateImage("scm1_st0.jpg", &coloringMethod);
+                //scm2->generateImage("scm2_st0.jpg", &coloringMethod);
+                std::cout << "\nStage 1:" << std::endl;
             }
 
             cellTrees.resize(0);
@@ -418,11 +418,13 @@ namespace cm {
                 for (IDType i = 0; i < sinkDoA2.size(); i++) {
                     cellStates[(int) scm2->getCss().getCell(sinkDoA2[i]).getState()]++;
                 }
-                std::cout << "Cell States:\n";
-                std::cout << " Untouched:\t\t"      << cellStates[(int) CellState::Untouched] << std::endl;
-                std::cout << " UnderProcessing:\t"  << cellStates[(int) CellState::UnderProcessing] << std::endl;
-                std::cout << " Processed:\t\t"      << cellStates[(int) CellState::Processed] << std::endl;
-                std::cout << (cellStates[0] + cellStates[1] + cellStates[2]) << "/" << sinkCount << "\n";
+                //std::cout << "Cell States:\n";
+                //std::cout << " Untouched:\t\t"      << cellStates[(int) CellState::Untouched] << std::endl;
+                //std::cout << " UnderProcessing:\t"  << cellStates[(int) CellState::UnderProcessing] << std::endl;
+                //std::cout << " Processed:\t\t"      << cellStates[(int) CellState::Processed] << std::endl;
+                //std::cout << (cellStates[0] + cellStates[1] + cellStates[2]) << "/" << sinkCount << "\n";
+                std::cout << " Processed " << cellStates[(int) CellState::Processed] << " cells (";
+                std::cout << double(cellStates[(int) CellState::Processed])/sinkCount*100.0 << "%)" << std::endl;
             }
             // List seq statistics, also reset their state to UNTOUCHED
             pathsum = 0;
@@ -432,11 +434,11 @@ namespace cm {
                 cellTrees[p].setState(CellState::Untouched);
             }
             if (verbose) {
-                std::cout << "Number of cellTrees: " << cellTrees.size() << std::endl;
-                std::cout << "Number of cells in cellTrees: " << pathsum << std::endl;
-                scm1->generateImage("scm1_st1.jpg");
-                scm2->generateImage("scm2_st1.jpg");
-                std::cout << "Stage 2" << std::endl;
+                std::cout << " Cell trees constructed: " << cellTrees.size() << std::endl;
+                std::cout << " Number of cells in cell trees: " << pathsum << std::endl;
+                //scm1->generateImage("scm1_st1.jpg", &coloringMethod);
+                //scm2->generateImage("scm2_st1.jpg", &coloringMethod);
+                std::cout << "\nStage 2:" << std::endl;
             }
 
             join_stage2(scm1, scm2);
@@ -451,16 +453,40 @@ namespace cm {
                 for (size_t i = 0; i < sinkDoA2.size(); i++) {
                     cellStates[(int) scm2->getCss().getCell(sinkDoA2[i]).getState()]++;
                 }
-                std::cout << "Cell States:\n";
-                std::cout << " Untouched:\t\t"      << cellStates[(int) CellState::Untouched] << std::endl;
-                std::cout << " UnderProcessing:\t" << cellStates[(int) CellState::UnderProcessing] << std::endl;
-                std::cout << " Processed:\t\t"      << cellStates[(int) CellState::Processed] << std::endl;
-                std::cout << (cellStates[0] + cellStates[1] + cellStates[2]) << "/" << sinkCount << "\n";
+                size_t processedPaths = 0;
+                for (size_t p=0; p < cellTrees.size(); p++) {
+                    if(cellTrees[p].getState() == CellState::Processed) {processedPaths++;}
+                }
+                //std::cout << "Cell States:\n";
+                //std::cout << " Untouched:\t\t"      << cellStates[(int) CellState::Untouched] << std::endl;
+                //std::cout << " UnderProcessing:\t" << cellStates[(int) CellState::UnderProcessing] << std::endl;
+                //std::cout << " Processed:\t\t"      << cellStates[(int) CellState::Processed] << std::endl;
+                //std::cout << (cellStates[0] + cellStates[1] + cellStates[2]) << "/" << sinkCount << "\n";
+                std::cout << " Processed " << cellStates[(int) CellState::Processed] << " cells (";
+                std::cout << double(cellStates[(int) CellState::Processed])/sinkCount*100.0 << "%)" << std::endl;
+                std::cout << " Processed cell trees: " << processedPaths << std::endl;
             }
 
+            // Shift SCM2's group numbers
+            IDType groupshift = scm1->getPeriodicGroups();
+            IDType totalgroups = scm1->getPeriodicGroups() + scm2->getPeriodicGroups();
+            scm1->setPeriodicGroups(totalgroups);
+            scm2->setPeriodicGroups(totalgroups);
+        #pragma omp parallel for
+            for (IDType z=1; z<scm1->getCss().getCellSum(); z++) {
+                if (scm1->getCss().getCell(z).getClusterID() == cmid2 && scm1->getCss().getCell(z).getGroup() != 0) {
+                    scm1->getCss().getCell(z).setGroup(scm1->getCss().getCell(z).getGroup()+groupshift);
+                }
+            }
+        #pragma omp parallel for
+            for (IDType z=1; z<scm2->getCss().getCellSum(); z++) {
+                if (scm2->getCss().getCell(z).getClusterID() == cmid2 && scm2->getCss().getCell(z).getGroup() != 0) {
+                    scm2->getCss().getCell(z).setGroup(scm2->getCss().getCell(z).getGroup()+groupshift);
+                }
+            }
             if (verbose) {
-                scm1->generateImage("scm1_st2.jpg");
-                scm2->generateImage("scm2_st2.jpg");
+                scm1->generateImage("scm1_st2.jpg", &coloringMethod);
+                scm2->generateImage("scm2_st2.jpg", &coloringMethod);
             }
         }
 

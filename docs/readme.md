@@ -78,8 +78,7 @@ This allows continuation of SCM towards state-space regions where trajectories e
 
 As an example, consider the left SCM solution, which will be extended with a new region (right SCM solution). The following figures show the initial SCM solutions on these two state-space regions:
 
-<img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm1_initial.jpg" width="49%">
-<img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm2_initial.jpg" width="49%">
+<img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm1_initial.jpg" width="49%"><img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm2_initial.jpg" width="49%">
 
 Joining these solutions can be done with:
 
@@ -88,7 +87,6 @@ Joining these solutions can be done with:
 
 After the procedure is completed, the following outputs can be observed:
 
-<img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm1_joined.jpg" width="49%">
-<img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm2_joined.jpg" width="49%">
+<img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm1_joined.jpg" width="49%"><img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm2_joined.jpg" width="49%">
 
 Note, that in this particular example, some periodic groups are at the boundary line between the two state-space regions and they are also discovered by the C-SCM method.

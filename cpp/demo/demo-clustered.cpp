@@ -20,13 +20,15 @@ int main() {
 
     SCM<ClusterableSCMCell<uint32_t>, uint32_t, vec2> scm1(center, width, cells, &system);
     scm1.solve(20);
+    scm1.generateImage("scm1_initial.jpg");
 
     vec2 center2 = center + vec2({width[0], 0});
     SCM<ClusterableSCMCell<uint32_t>, uint32_t, vec2> scm2(center2, width, cells, &system);
     scm2.solve(20);
+    scm2.generateImage("scm2_initial.jpg");
 
     ClusteredSCM<ClusterableSCMCell<uint32_t>, uint32_t, vec2> cscm(&scm1, &scm2);
-    bool verbose = true; // This will generate intermediate images
+    bool verbose = true; // This will generate output images after the joining procedure
     cscm.join(verbose);
 
     // Create a full-size SCM for validation

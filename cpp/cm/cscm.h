@@ -485,8 +485,8 @@ namespace cm {
                 }
             }
             if (verbose) {
-                scm1->generateImage("scm1_st2.jpg", &coloringMethod);
-                scm2->generateImage("scm2_st2.jpg", &coloringMethod);
+                scm1->generateImage("scm1_joined.jpg", &coloringMethod);
+                scm2->generateImage("scm2_joined.jpg", &coloringMethod);
             }
         }
 

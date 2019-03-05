@@ -61,3 +61,34 @@ Upon successful execution the resulting output and image will describe objects i
 ![SCM solution of the Pendulum system](https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/pendulum.jpg "SCM solution of the Pendulum system")
 
 Coloured regions indicate domains of attraction of stable equilibria -- fixed points
+
+Clustered SCM example
+------------------------
+
+The `ClusteredSCM` class can be used to join two (or more) SCM solutions and create a cluster of solutions, which can be extended by additional solutions on demand.
+This allows continuation of SCM towards state-space regions where trajectories escape to the sink cell, and also makes parallel execution of SCM on separate state-space regions possible.
+
+	SCM<ClusterableSCMCell<uint32_t>, uint32_t, vec2> scm1(center, width, cells, &system);
+    scm1.solve(20);
+    scm1.generateImage("scm1_initial.jpg");
+    vec2 center2 = center + vec2({width[0], 0});
+    SCM<ClusterableSCMCell<uint32_t>, uint32_t, vec2> scm2(center2, width, cells, &system);
+    scm2.solve(20);
+    scm2.generateImage("scm2_initial.jpg");
+
+As an example, consider the left SCM solution, which will be extended with a new region (right SCM solution). The following figures show the initial SCM solutions on these two state-space regions:
+
+<img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm1_initial.jpg" width="49%">
+<img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm2_initial.jpg" width="49%">
+
+Joining these solutions can be done with:
+
+	ClusteredSCM<ClusterableSCMCell<uint32_t>, uint32_t, vec2> cscm(&scm1, &scm2);
+    cscm.join(true); // Bool argument controls output image generation
+
+After the procedure is completed, the following outputs can be observed:
+
+<img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm1_joined.jpg" width="49%">
+<img src="https://raw.githubusercontent.com/Gyebro/cell-mapping/master/docs/tex/fig/scm2_joined.jpg" width="49%">
+
+Note, that in this particular example, some periodic groups are at the boundary line between the two state-space regions and they are also discovered by the C-SCM method.

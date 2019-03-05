@@ -94,6 +94,28 @@ namespace cm {
          }
      };
 
+    template <class IDType>
+    class ClusterableSCMCell : public SCMCell<IDType> {
+    private:
+        IDType clusterID;
+        IDType cellTreeID;
+    public:
+        ClusterableSCMCell() : clusterID(0), cellTreeID(0) {
+        }
+        IDType getClusterID() const {
+            return clusterID;
+        }
+        void setClusterID(IDType clusterID) {
+            ClusterableSCMCell::clusterID = clusterID;
+        }
+        IDType getCellTreeID() const {
+            return cellTreeID;
+        }
+        void setCellTreeID(IDType cellTreeID) {
+            ClusterableSCMCell::cellTreeID = cellTreeID;
+        }
+    };
+
 }
 
 #endif //CELL_MAPPING_CPP_CELL_H

@@ -473,6 +473,7 @@ namespace cm {
             scm1->setPeriodicGroups(totalgroups);
             scm2->setPeriodicGroups(totalgroups);
         #pragma omp parallel for
+            // TODO: getCellSum should be N+1
             for (IDType z=1; z<scm1->getCss().getCellSum(); z++) {
                 if (scm1->getCss().getCell(z).getClusterID() == cmid2 && scm1->getCss().getCell(z).getGroup() != 0) {
                     scm1->getCss().getCell(z).setGroup(scm1->getCss().getCell(z).getGroup()+groupshift);
@@ -489,7 +490,12 @@ namespace cm {
                 scm2->generateImage("scm2_joined.jpg", &coloringMethod);
             }
         }
+        /**
+         * Merges the two SCMs into a single SCM object
+         */
+        void merge(bool verbose = false) {
 
+        }
     };
 
 }

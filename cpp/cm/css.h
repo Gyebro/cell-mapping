@@ -38,8 +38,8 @@ namespace cm {
          * Returns the cell with the given ID
          */
         virtual CellType& getCell(const IDType id) = 0;
-        virtual const StateVectorType& getCenter() const = 0;
-        virtual const StateVectorType& getWidth() const = 0;
+        //virtual const StateVectorType& getCenter() const = 0;
+        //virtual const StateVectorType& getWidth() const = 0;
     };
 
     template <class CellType, class IDType, class StateVectorType>
@@ -71,13 +71,13 @@ namespace cm {
                 cellWidth[i] = width[i] / cellCounts[i];
             }
         }
-        const StateVectorType& getWidth() const {
+        /*const StateVectorType& getWidth() const {
             return width;
         }
         const StateVectorType& getCenter() const {
             return center;
-        }
-        IDType getIDFromCellCoord(std::vector<IDType> cellCoord) {
+        }*/
+        IDType getIDFromCellCoord(std::vector<IDType> cellCoord) const {
             IDType id = 1;
             for (IDType i=0; i<dimension; i++) {
                 id += cellCoord[i] * cellBase[i];
@@ -142,6 +142,146 @@ namespace cm {
         }
     };
 
+    // TODO: Avoid copying blocks
+    // TODO: Introduce helper functions for accessing cells without local block/localID variables
+    // TODO: Code-review on uniform state space and it's cellSum data member.
+    /**
+     * The BlockedUniformCellStateSpace wraps multiple UniformCellStateSpaces together
+     * the Cell ID will be 0..N1 for the first block
+     *  N1+0...N2 for the second block,
+     *  N1+N2+0...N3 for the third, etc, where Ni is the cell count for the i-th block
+     * @tparam CellType
+     * @tparam IDType
+     * @tparam StateVectorType
+     */
+    template <class CellType, class IDType, class StateVectorType>
+    class BlockedUniformCellStateSpace : public CellStateSpaceBase<CellType, IDType, StateVectorType> {
+    protected:
+        const IDType ID_SINK_CELL = 0; // TODO: Multiple definitions -> move to a global constant?
+        std::vector<UniformCellStateSpace<CellType, IDType, StateVectorType>> ucss;
+        std::vector<IDType> blockSizes;
+    public:
+        BlockedUniformCellStateSpace() {
+
+        }
+        const UniformCellStateSpace<CellType, IDType, StateVectorType>& getBlock(IDType bid) const {
+            return ucss[bid];
+        }
+        const IDType getBlockCount() const {
+            return blockSizes.size();
+        }
+        void addBlock(UniformCellStateSpace<CellType, IDType, StateVectorType> css) {
+            // TODO: This will be a copy for debug purposes first! Optimize this!
+            ucss.push_back(css);
+            blockSizes.push_back(css.getCellSum()+1);
+            // TODO: Possible overflow! FIXME css.getcellSum currently returns N, but there's N+1 cells, last valid index is N.
+            // TODO: Logic -> check if CSS block overlaps with others!
+        }
+        /*IDType getIDFromCellCoord(std::vector<IDType> cellCoord) {
+            IDType id = 0;
+            return id;
+        }*/
+        IDType getID(const StateVectorType& state, IDType& block) const {
+            IDType id;
+            block = 0;
+            for (const UniformCellStateSpace<CellType, IDType, StateVectorType> &css : ucss) {
+                id = css.getID(state);
+                if (id != 0) {
+                    break; // If CSSs are not overlapping, only one CSS should return nonzero ID.
+                } else {
+                    block++;
+                }
+            }
+            if (id==ID_SINK_CELL) block = 0; // Tie sink cell to block 0
+            return id; // Another output is 'block' argument
+        }
+        IDType getID(const StateVectorType& state) const {
+            IDType block, id;
+            id = getID(state, block);
+            IDType globalID = id;
+            for (IDType b = 0; b < block; b++) {
+                globalID += blockSizes[b];
+            }
+            return globalID;
+        }
+        CellType& getCellAtState(const StateVectorType& state) {
+            IDType block, localID;
+            localID = getID(state, block);
+            return ucss[block].getCell(localID);
+        }
+        const CellType& getCellAtState(const StateVectorType& state) const {
+            IDType block, localID;
+            localID = getID(state, block);
+            return ucss[block].getCell(localID);
+        }
+        void getBlockAndId(const IDType ID, IDType& block, IDType& localID) const {
+            localID = ID;
+            for (block = 0; block < blockSizes.size(); block++) {
+                if (localID < blockSizes[block]) break;
+                else localID -= blockSizes[block];
+            }
+        }
+        CellType& getCell(const IDType ID) {
+            IDType block, localID;
+            getBlockAndId(ID, block, localID);
+            return ucss[block].getCell(localID);
+        }
+        const CellType& getCell(const IDType ID) const {
+            IDType block, localID;
+            getBlockAndId(ID, block, localID);
+            return ucss[block].getCell(localID);
+        }
+        const StateVectorType getCenter(const IDType ID) const {
+            // Return the center point of the given cell
+            IDType block, localID;
+            getBlockAndId(ID, block, localID);
+            return ucss[block].getCenter(localID);
+        }
+        IDType getCellSum() const {
+            IDType cellSum = 0;
+            for (const IDType& c : blockSizes) {
+                cellSum += c;
+            }
+            return cellSum;
+        }
+        const std::vector<IDType> &getCellCounts() const {
+            return blockSizes;
+        }
+        // These helper functions are the "pairs" of those in SCMUniformCellStateSpace
+        const IDType getImage(const IDType ID) const {
+            IDType block, localID;
+            getBlockAndId(ID, block, localID);
+            return this->ucss[block].getCell(localID).getImage();
+        }
+        const IDType getGroup(const IDType ID) const {
+            IDType block, localID;
+            getBlockAndId(ID, block, localID);
+            return this->ucss[block].getCell(localID).getGroup();
+        }
+        const IDType getStep(const IDType ID) const {
+            IDType block, localID;
+            getBlockAndId(ID, block, localID);
+            return this->ucss[block].getCell(localID).getStep();
+        }
+        void setImage(const IDType ID, const IDType image) {
+            IDType block, localID;
+            getBlockAndId(ID, block, localID);
+            this->ucss[block].getCell(localID).setImage(image);
+        }
+        void setGroup(const IDType ID, const IDType group) {
+            IDType block, localID;
+            getBlockAndId(ID, block, localID);
+            this->ucss[block].getCell(localID).setGroup(group);
+        }
+        void setStep(const IDType ID, const IDType step) {
+            IDType block, localID;
+            getBlockAndId(ID, block, localID);
+            this->ucss[block].getCell(localID).setStep(step);
+        }
+    };
+
+
+    //TODO: Note to self: blocking makes it inconvenient to add these helper functions. It would be better to avoid this inheritance step
     /**
      * \class SCMUniformCellStateSpace
      * @tparam CellType

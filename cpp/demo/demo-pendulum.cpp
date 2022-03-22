@@ -9,7 +9,7 @@ int main() {
     double alpha = 1.0;
     double delta = 0.2;
     double integration_time = 0.1;
-    Pendulum pendulum(alpha, delta, integration_time);
+    IkedaMap pendulum(alpha, delta, integration_time);
 
     vec2 center = {0.0, 0.0};
     vec2 width  = {16.0*M_PI, 10.0};

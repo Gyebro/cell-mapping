@@ -40,7 +40,8 @@ public:
 
 int main() {
 
-    double alpha = 0.05; // 0.05 vs 0.5
+    double alpha = M_PI/5.5; // 0.05 vs 0.5
+    cout << alpha << endl;
     RotationMap system(alpha);
 
     vec2 center = {0, 0};

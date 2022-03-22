@@ -6,6 +6,7 @@
  */
 
 #include "scm.h"
+#include "scmb.h"
 #include "cscm.h"
 
 #endif

@@ -12,13 +12,13 @@
  * y'' = -beta y' - alpha sin(y)
  * y'  = y'
  */
-class Pendulum : public cm::DynamicalSystemBase<vec2>  {
+class IkedaMap : public cm::DynamicalSystemBase<vec2>  {
 private:
     double alpha;
     double delta;
     double dt;
 public:
-    Pendulum(double alpha, double delta, double timestep) : alpha(alpha), delta(delta) {
+    IkedaMap(double alpha, double delta, double timestep) : alpha(alpha), delta(delta) {
         dt = timestep;
     }
     /**
@@ -32,7 +32,7 @@ public:
     }
     vec2 step(const vec2 &state) const override {
         // Use RK45 to integrate the system scheme
-        cm::RK45<vec2,Pendulum> rk45(this, 1e-8);
+        cm::RK45<vec2,IkedaMap> rk45(this, 1e-8);
         return rk45.step(state, 0, dt, dt/50.0);
     }
 

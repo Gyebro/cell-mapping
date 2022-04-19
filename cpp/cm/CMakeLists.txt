@@ -10,6 +10,7 @@ add_library(cm
 		scmb.cpp scmb.h
 		system.cpp system.h
 		vec2.cpp vec2.h
+		vec3.cpp vec3.h
 		rk45.cpp rk45.h
 		coloring.cpp coloring.h
 		cscm.cpp cscm.h)

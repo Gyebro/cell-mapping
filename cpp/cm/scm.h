@@ -6,6 +6,7 @@
 #include "coloring.h"
 #include <stdio.h>
 #include <jpeg-9a/jpeglib.h>
+#include <fstream>
 
 #include <iostream>
 
@@ -42,6 +43,7 @@ namespace cm {
                 }
                 css.setImage(i, image);
             }
+            std::cout << "Solving SCM on the state space...\n";
             periodicGroups = 0;
             periodicities.resize(0);
             periodicGroupIDs.resize(0);
@@ -119,7 +121,50 @@ namespace cm {
             } // end for
             std::cout << "Number of PGs: " << periodicGroups << std::endl;
         }
-        void printSummary();
+        void exportGroups(std::string filename, IDType dim) {
+            std::ofstream out(filename);
+            std::string sep = ", ";
+            std::cout << "Summary:\n";
+            std::cout << "Number of PGs: " << periodicGroups << std::endl;
+            std::cout << "PG \tPeriodicity\n";
+            for (size_t pg=0; pg<periodicGroups; pg++) {
+                std::cout << pg << "\t" << periodicities[pg] << (pg==0?"(Sink)":"") << std::endl;
+            }
+            for (size_t i=0; i<css.getCellSum(); i++) {
+                if ((css.getCell(i).getGroup() > 0) && (css.getCell(i).getStep() == 0)) {
+                    StateVectorType cnt = css.getCenter(i);
+                    for (size_t j=0; j<dim; j++) out << cnt[j] << sep;
+                    out << css.getCell(i).getGroup() << std::endl;
+                }
+            }
+            out.close();
+        }
+        std::vector<StateVectorType> getPG(IDType id) {
+            std::vector<StateVectorType> PG;
+            if (id > 0) {
+                if (id >= periodicGroups) {
+                    std::cout << "The highest valid PG index is " << periodicGroups-1 << std::endl;
+                } else {
+                    for (size_t i=0; i<css.getCellSum(); i++) {
+                        if ((css.getCell(i).getGroup() == id) && (css.getCell(i).getStep() == 0)) {
+                            PG.emplace_back(css.getCenter(i));
+                        }
+                    }
+                }
+            } else {
+                std::cout << "PG 0 is the sink cell!" << std::endl;
+            }
+            return PG;
+        }
+        std::vector<StateVectorType> getAllPGs() {
+            std::vector<StateVectorType> PG;
+            for (size_t i=0; i<css.getCellSum(); i++) {
+                if ((css.getCell(i).getGroup() > 0) && (css.getCell(i).getStep() == 0)) {
+                    PG.emplace_back(css.getCenter(i));
+                }
+            }
+            return PG;
+        }
         void generateImage(std::string filepath, SCMColoringMethod<CellType, IDType>* coloringMethod=nullptr,
                 IDType x0=0, IDType y0=0, IDType xw=0, IDType yw=0) {
             // Instantiate coloring method if not provided
@@ -158,6 +203,73 @@ namespace cm {
                 }
             }
 
+            cinfo.err = jpeg_std_error(&jerr);
+            jpeg_create_compress(&cinfo);
+            jpeg_stdio_dest(&cinfo, outfile);
+            cinfo.image_width      = (JDIMENSION) xw;
+            cinfo.image_height     = (JDIMENSION) yw;
+            cinfo.input_components = (int) components;
+            cinfo.in_color_space   = JCS_RGB;
+
+            jpeg_set_defaults(&cinfo);
+            jpeg_set_quality (&cinfo, 100, true); // Set the quality [0..100]
+            jpeg_start_compress(&cinfo, true);
+            JSAMPROW row_pointer;
+            while (cinfo.next_scanline < cinfo.image_height) {
+                row_pointer = (JSAMPROW) &(buffer.data()[cinfo.next_scanline*components*xw]);
+                jpeg_write_scanlines(&cinfo, &row_pointer, 1);
+            }
+            jpeg_finish_compress(&cinfo);
+        }
+        void generateImageProjection(std::string filepath, SCMColoringMethod<CellType, IDType>* coloringMethod=nullptr,
+                           IDType idX=0, IDType idY=1, IDType idZ=2,
+                           IDType x0=0, IDType y0=0, IDType xw=0, IDType yw=0) {
+            // Instantiate coloring method if not provided
+            SCMDefaultColoring<CellType, IDType> defaultColoring;
+            if (coloringMethod == nullptr) {
+                coloringMethod = &defaultColoring;
+            }
+            std::cout << "Generating JPG: " << filepath << std::endl;
+            // Accessing a plane from CellStateSpace
+            FILE* outfile = fopen(filepath.c_str(), "wb");
+            if (outfile == NULL) {
+                std::cout << "Failed to open output file: " << filepath << std::endl;
+            }
+            struct jpeg_compress_struct cinfo;
+            struct jpeg_error_mgr       jerr;
+            if (xw == 0) xw = css.getCellCounts()[idX];
+            if (yw == 0) yw = css.getCellCounts()[idY];
+            IDType zw = css.getCellCounts()[idZ];
+            size_t components = 3; // RGB
+            // TODO: Use only line buffers (generate and save on-the-fly)
+            std::vector<char> buffer(xw*yw*components);
+            size_t buff_p;
+            std::vector<IDType> cellCoord(3);
+            IDType id;
+            for (size_t i=0; i<yw; i++) {
+                for (size_t j=0; j<xw; j++) {
+                    std::vector<char> rgbFinal(3);
+                    rgbFinal[0] = 0;
+                    rgbFinal[1] = 0;
+                    rgbFinal[2] = 0;
+                    for (size_t k=0; k<zw; k++) {
+                        cellCoord[idX]=x0+j;
+                        cellCoord[idY]=y0+yw-1-i;
+                        cellCoord[idZ]=k;
+                        id = css.getIDFromCellCoord(cellCoord);
+                        CellType cell = css.getCell(id);
+                        std::vector<char> rgb = coloringMethod->createColor(cell, periodicGroups);
+                        // TODO: Export blending function!
+                        rgbFinal[0] = std::max(rgbFinal[0], rgb[0]);
+                        rgbFinal[1] = std::max(rgbFinal[1], rgb[1]);
+                        rgbFinal[2] = std::max(rgbFinal[2], rgb[2]);
+                    }
+                    buff_p = (i*xw+j)*components;
+                    buffer[buff_p]	= rgbFinal[0];
+                    buffer[buff_p+1]= rgbFinal[1];
+                    buffer[buff_p+2]= rgbFinal[2];
+                }
+            }
             cinfo.err = jpeg_std_error(&jerr);
             jpeg_create_compress(&cinfo);
             jpeg_stdio_dest(&cinfo, outfile);

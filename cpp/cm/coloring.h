@@ -123,6 +123,30 @@ namespace cm {
             return rgb;
         }
     };
+
+    template <class CellType, class IDType>
+    class SCMBinaryColoring : public SCMColoringMethod<CellType, IDType> {
+        std::vector<char> createColor(const CellType& cell,
+                                      const IDType periodicGroups) {
+            IDType group = cell.getGroup();
+            IDType step = cell.getStep();
+            // Create a HSV color
+            double h, s, v;
+            h = 0.0;
+            s = 0.0; // Constant saturation
+            //v = 1.0-0.5*double(step)/100.0; if (v < 0.0) v = 0.0;
+            v = 0;
+            if (group == 0) { v = 0.0; } // Sink and it's DoA will be black
+            if (step == 0) { v = 1.0; } // Periodic cells will be white
+            double r, g, b;
+            hsv2rgb(h, s, v, r, g, b);
+            std::vector<char> rgb(3);
+            rgb[0]=(char)(r*255);
+            rgb[1]=(char)(g*255);
+            rgb[2]=(char)(b*255);
+            return rgb;
+        }
+    };
 }
 
 

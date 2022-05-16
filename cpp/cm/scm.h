@@ -39,6 +39,10 @@ namespace cm {
                 while (image == i && steps < max_steps) {
                     imageState = systemPointer->step(imageState);
                     image = css.getID(imageState);
+                    if (image > css.getCellSum()) {
+                        // TODO: Related to #1
+                        std::cout << "Error, invalid image ID\n";
+                    }
                     steps++;
                 }
                 css.setImage(i, image);

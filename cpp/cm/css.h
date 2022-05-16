@@ -87,7 +87,7 @@ namespace cm {
         IDType getID(const StateVectorType& state) const {
             bool inside = true; // Out of state space bounds check
             for (IDType i=0; i<dimension; i++) {
-                inside &= (center[i]-0.5*width[i] <= state[i]) && (state[i] <= center[i]+0.5*width[i]);
+                inside &= (center[i]-0.5*width[i] <= state[i]) && (state[i] < center[i]+0.5*width[i]);
             }
             IDType id;
             if (!inside) {
@@ -97,7 +97,15 @@ namespace cm {
                 id = 1; // Skip the Sink cell (id = 0)
                 for (IDType i=0; i<dimension; i++) {
                     cellCoord = (IDType)floor((state[i] - (center[i]-0.5*width[i]))/cellWidth[i]);
-                    id += cellCoord * cellBase[i];
+                    // TODO: Check validity of cellCoord -> bug, when state is FLT_EPSILON close to cell boundary
+                    // TODO: Related to #1
+                    if (cellCoord >= cellCounts[i]) {
+                        // Outside!
+                        id = 0;
+                        break;
+                    } else {
+                        id += cellCoord * cellBase[i];
+                    }
                 }
             }
             return id;

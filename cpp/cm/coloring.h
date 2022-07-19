@@ -84,13 +84,15 @@ namespace cm {
             IDType step = cell.getStep();
             // Create a HSV color
             double h, s, v;
-            double transient_steps = 200.0;
+            double transient_steps = 280.0;
+            double sink_transient_steps = 40;
             h = double(step)/transient_steps; // Hue based on step number
             s = 0.8; // Constant saturation
             v = 0.8; // Constant value
             if (group == 0) {
                 s = 0.0;
-                v = 1; // Sink cell's domain
+                v = double(step)/sink_transient_steps; // Sink cell's domain
+                if (v > 1.0) v = 1.0;
             }
             double r, g, b;
             hsv2rgb(h, s, v, r, g, b);

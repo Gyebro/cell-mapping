@@ -11,8 +11,8 @@ int main() {
     LimitCycle limitCycle(dt);
 
     vec3 center = {0.0, 0.0, 0.0};
-    vec3 width  = {90.0, 4.0, 3.0};
-    vector<uint32_t> cells = {600, 300, 600}; //{300, 300, 300};
+    vec3 width  = {220.0, 8.0, 6.0};
+    vector<uint32_t> cells = {1200, 600, 1200}; //{600, 300, 600};
 
     SCMBinaryColoring<SCMCell<uint32_t>, uint32_t> coloringMethod;
 

@@ -16,6 +16,12 @@ The goal of the `CMlib` library is to provide simple and efficient implementatio
 
 The author of the `CMlib` library have used cell mapping methods extensively during his PhD studies and currently moving (and rewriting) his private code base to this open-source library.
 
+## Related paper
+
+G. Gyebrószki and G. Csernák, *Clustered Simple Cell Mapping: An extension to the Simple Cell Mapping method*, Communications in Nonlinear Science and Numerical Simulation 42, pp. 607–622, 2017. DOI: [10.1016/j.cnsns.2016.06.020](https://doi.org/10.1016/j.cnsns.2016.06.020).
+
+*Please consider citing this paper if you have found this program useful.*
+
 ## Features
 
 - Current version includes Simple Cell Mapping (SCM) and Clustered SCM methods, Generalized Cell Mapping (GCM) will be added.

@@ -2,7 +2,8 @@
 
 State-of-the-art implementation of several Cell Mapping methods, for analysing dynamical systems.
 
-Authors: Gergely Gyebrószki, Gábor Csernák
+**Authors:** Gergely Gyebrószki, Gábor Csernák
+
 Department of Applied Mechanics, Budapest University of Technology and Economics
 
 

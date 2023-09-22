@@ -2,6 +2,10 @@
 
 State-of-the-art implementation of several Cell Mapping methods, for analysing dynamical systems.
 
+Authors: Gergely Gyebrószki, Gábor Csernák
+Department of Applied Mechanics, Budapest University of Technology and Economics
+
+
 ## Introduction
 
 `CMlib` is a library of cell mapping algorithms and utility functions and classes written in c++. 

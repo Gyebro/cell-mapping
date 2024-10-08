@@ -40,6 +40,8 @@ vec3 operator+(const vec3& l, const vec3& r);
 
 vec3 operator-(const vec3& l, const vec3& r);
 
+double operator*(const vec3& l, const vec3& r);
+
 double norm(const vec3& v);
 
 #endif //CELL_MAPPING_CPP_VEC3_H

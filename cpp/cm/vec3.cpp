@@ -34,6 +34,11 @@ vec3 operator-(const vec3& l, const vec3& r) {
     return vec3({l[0]-r[0], l[1]-r[1], l[2]-r[2]});
 }
 
+/* scalar product */
+double operator*(const vec3& l, const vec3& r) {
+    return (l[0]*r[0] + l[1]*r[1] + l[2]*r[2]);
+}
+
 double norm(const vec3 &v) {
     return sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
 }

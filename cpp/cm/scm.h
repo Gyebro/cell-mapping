@@ -143,6 +143,47 @@ namespace cm {
             }
             out.close();
         }
+        void exportSolution(std::string filename, IDType dim) {
+            std::ofstream out(filename);
+            // Format: state vector (length = dim), group number, step number
+            std::string sep = ", ";
+            for (size_t i=0; i<css.getCellSum(); i++) {
+                StateVectorType cnt = css.getCenter(i);
+                for (size_t j=0; j<dim; j++) out << cnt[j] << sep;
+                out << css.getCell(i).getGroup() << sep << css.getCell(i).getStep() << std::endl;
+            }
+            out.close();
+        }
+        std::vector<StateVectorType> getTransients(IDType min_step, IDType max_step, boolean excl_sink = true) {
+            std::vector<StateVectorType> TCLS;
+            for (size_t i=0; i<css.getCellSum(); i++) {
+                if (excl_sink) {
+                    if ((css.getCell(i).getGroup() > 0) && (css.getCell(i).getStep() >= min_step) && (css.getCell(i).getStep() <= max_step)) {
+                        TCLS.emplace_back(css.getCenter(i));
+                    }
+                } else {
+                    if ((css.getCell(i).getStep() >= min_step) && (css.getCell(i).getStep() <= max_step)) {
+                        TCLS.emplace_back(css.getCenter(i));
+                    }
+                }
+            }
+            return TCLS;
+        }
+        std::vector<StateVectorType> getTransients(IDType step_num, boolean excl_sink = true) {
+            std::vector<StateVectorType> TCLS;
+            for (size_t i=0; i<css.getCellSum(); i++) {
+                if (excl_sink) {
+                    if ((css.getCell(i).getGroup() > 0) && (css.getCell(i).getStep() == step_num)) {
+                        TCLS.emplace_back(css.getCenter(i));
+                    }
+                } else {
+                    if ((css.getCell(i).getStep() == step_num)) {
+                        TCLS.emplace_back(css.getCenter(i));
+                    }
+                }
+            }
+            return TCLS;
+        }
         std::vector<StateVectorType> getPG(IDType id) {
             std::vector<StateVectorType> PG;
             if (id > 0) {
@@ -272,6 +313,65 @@ namespace cm {
                     buffer[buff_p]	= rgbFinal[0];
                     buffer[buff_p+1]= rgbFinal[1];
                     buffer[buff_p+2]= rgbFinal[2];
+                }
+            }
+            cinfo.err = jpeg_std_error(&jerr);
+            jpeg_create_compress(&cinfo);
+            jpeg_stdio_dest(&cinfo, outfile);
+            cinfo.image_width      = (JDIMENSION) xw;
+            cinfo.image_height     = (JDIMENSION) yw;
+            cinfo.input_components = (int) components;
+            cinfo.in_color_space   = JCS_RGB;
+
+            jpeg_set_defaults(&cinfo);
+            jpeg_set_quality (&cinfo, 100, true); // Set the quality [0..100]
+            jpeg_start_compress(&cinfo, true);
+            JSAMPROW row_pointer;
+            while (cinfo.next_scanline < cinfo.image_height) {
+                row_pointer = (JSAMPROW) &(buffer.data()[cinfo.next_scanline*components*xw]);
+                jpeg_write_scanlines(&cinfo, &row_pointer, 1);
+            }
+            jpeg_finish_compress(&cinfo);
+        }
+        void generateImageSlice(std::string filepath, SCMColoringMethod<CellType, IDType>* coloringMethod=nullptr,
+                                     IDType idZcell=0,
+                                     IDType idX=0, IDType idY=1, IDType idZ=2,
+                                     IDType x0=0, IDType y0=0, IDType xw=0, IDType yw=0) {
+            // Instantiate coloring method if not provided
+            SCMDefaultColoring<CellType, IDType> defaultColoring;
+            if (coloringMethod == nullptr) {
+                coloringMethod = &defaultColoring;
+            }
+            std::cout << "Generating JPG: " << filepath << std::endl;
+            // Accessing a plane from CellStateSpace
+            FILE* outfile = fopen(filepath.c_str(), "wb");
+            if (outfile == NULL) {
+                std::cout << "Failed to open output file: " << filepath << std::endl;
+            }
+            struct jpeg_compress_struct cinfo;
+            struct jpeg_error_mgr       jerr;
+            if (xw == 0) xw = css.getCellCounts()[idX];
+            if (yw == 0) yw = css.getCellCounts()[idY];
+            IDType zw = css.getCellCounts()[idZ];
+            size_t components = 3; // RGB
+            // TODO: Use only line buffers (generate and save on-the-fly)
+            std::vector<char> buffer(xw*yw*components);
+            size_t buff_p;
+            std::vector<IDType> cellCoord(3);
+            IDType id;
+            for (size_t i=0; i<yw; i++) {
+                for (size_t j=0; j<xw; j++) {
+                    cellCoord[idX]=x0+j;
+                    cellCoord[idY]=y0+yw-1-i;
+                    cellCoord[idZ]=idZcell;
+                    // TODO: getIDFromCellCoord is unsafe outside!
+                    id = css.getIDFromCellCoord(cellCoord);
+                    CellType cell = css.getCell(id);
+                    std::vector<char> rgb = coloringMethod->createColor(cell, periodicGroups);
+                    buff_p = (i*xw+j)*components;
+                    buffer[buff_p]	= rgb[0];
+                    buffer[buff_p+1]= rgb[1];
+                    buffer[buff_p+2]= rgb[2];
                 }
             }
             cinfo.err = jpeg_std_error(&jerr);

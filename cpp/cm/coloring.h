@@ -111,7 +111,7 @@ namespace cm {
             double h, s, v;
             h = 0.0;
             s = 0.0; // Constant saturation
-            v = 0.6+0.4*double(step)/200.0; if (v > 1.0) v = 1.0;
+            v = 0.8+0.2*double(step)/200.0; if (v > 1.0) v = 1.0;
             if (step == 0) { v = 0.0; } // Periodic cells will be black
             double r, g, b;
             hsv2rgb(h, s, v, r, g, b);

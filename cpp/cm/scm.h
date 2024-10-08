@@ -119,7 +119,12 @@ namespace cm {
             } // end for
             std::cout << "Number of PGs: " << periodicGroups << std::endl;
         }
-        void printSummary();
+        void printSummary() {
+            std::cout << "Number of PGs: " << periodicGroups << std::endl;
+            for (size_t i=0; i<periodicGroups; i++) {
+                std::cout << "PG " << i << " has periodicity of: " << periodicities[i] << std::endl;
+            }
+        }
         void generateImage(std::string filepath, SCMColoringMethod<CellType, IDType>* coloringMethod=nullptr,
                 IDType x0=0, IDType y0=0, IDType xw=0, IDType yw=0) {
             // Instantiate coloring method if not provided

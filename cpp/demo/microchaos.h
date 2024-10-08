@@ -4,8 +4,15 @@
 #include "system.h"
 #include "vec2.h"
 
+enum class RoundingType {
+    Out,
+    In,
+    InOut
+};
+
 class MicroChaosMapStatic : public cm::DynamicalSystemBase<vec2> {
 protected:
+    RoundingType roundingType; /**< Type of rounding, In, Out or InOut */
     double alpha;	/**< Natural frequency */
     double delta;	/**< Relative damping */
     double P;		/**< Proportional control gain */
@@ -26,7 +33,7 @@ public:
     /**
      * \brief Initializes the system with its parameters
      */
-    MicroChaosMapStatic(double P, double D, double alpha, double delta);
+    MicroChaosMapStatic(double P, double D, double alpha, double delta, RoundingType rounding = RoundingType::Out);
     /**
     * \brief Step with the micro-chaos map
     */

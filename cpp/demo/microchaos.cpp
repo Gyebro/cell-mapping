@@ -1,7 +1,8 @@
 #include "microchaos.h"
 #include <cmath>
 
-MicroChaosMapStatic::MicroChaosMapStatic(double P, double D, double alpha, double delta) {
+MicroChaosMapStatic::MicroChaosMapStatic(double P, double D, double alpha, double delta, RoundingType rounding) {
+    roundingType = rounding;
     MicroChaosMapStatic::alpha = alpha;
     MicroChaosMapStatic::delta = delta;
     MicroChaosMapStatic::P = P;
@@ -39,7 +40,17 @@ vec2 MicroChaosMapStatic::bs(double s) const {
 
 vec2 MicroChaosMapStatic::step(const vec2& y0) const {
     double M;
-    M = SymmetricFloor(k*y0); // Rounding at output
+    switch (roundingType) {
+        case RoundingType::Out:
+            M = SymmetricFloor(k*y0); // Rounding at output
+            break;
+        case RoundingType::In:
+            M = k * vec2{SymmetricFloor(y0[0]), SymmetricFloor(y0[1])};
+            break;
+        default:
+            M = 0;
+            break;
+    }
     vec2 y1 = U*y0 + b*M;
     return y1;
 }

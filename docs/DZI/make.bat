@@ -1,0 +1,1 @@
+hdmake.exe -srcgrid 4 3 0_0.jpg 1_0.jpg 2_0.jpg 3_0.jpg 0_1.jpg 1_1.jpg 2_1.jpg 3_1.jpg 0_2.jpg 1_2.jpg 2_2.jpg 3_2.jpg -viewer 2 -nozip

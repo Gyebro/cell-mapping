@@ -41,7 +41,12 @@ public:
         double t2 = 60; // Lt. blue -> Blue
         double t3 = 100;
         double t4 = 150;
-        double t5 = 200;
+        double t5 = 250;
+        /*t1 = 2*10; // White -> Light blue
+        t2 = 2*60; // Lt. blue -> Blue
+        t3 = 2*100;
+        t4 = 2*150;
+        t5 = 2*200;*/
         if (group == 0) {
             h = h5;
             s = s5;
@@ -97,13 +102,20 @@ int main() {
     MicroChaosMapStatic system(P, D, alpha, delta);
 
     vec2 center = {0, 0};
-    vec2 width  = {2500, 70};
-    vector<uint32_t> cells = {4000, 2000};//{8000, 4000};
+    uint32_t mult = 1;
+    uint32_t margin_h = mult * 3000;
+    uint32_t margin_v = mult * 3000;
+    uint32_t target_w = mult * 4000;
+    uint32_t target_h = mult * 3000;
+    vec2 width  = {2500.0 * (target_w + 2 * margin_h) / (target_w),
+                   96.0 * (target_h + 2 * margin_v) / (target_h)};
+    vector<uint32_t> cells = {target_w + 2 * margin_h, target_h + 2 * margin_v};
 
     MyColoringMethod<SCMCell<uint32_t>, uint32_t> coloringMethod;
     SCM<SCMCell<uint32_t>, uint32_t, vec2> scm(center, width, cells, &system);
     scm.solve(20);
-    scm.generateImage("scm-microchaos-colouring.jpg", &coloringMethod);
+
+    scm.generateImage("scm-microchaos-colouring.jpg", &coloringMethod, margin_h, margin_v, cells[0] - 2 * margin_h, cells[1] - 2 * margin_v);
 
     return 0;
 }

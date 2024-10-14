@@ -211,7 +211,7 @@ namespace cm {
             return PG;
         }
         void generateImage(std::string filepath, SCMColoringMethod<CellType, IDType>* coloringMethod=nullptr,
-                IDType x0=0, IDType y0=0, IDType xw=0, IDType yw=0) {
+                IDType x0=0, IDType y0=0, IDType xw=0, IDType yw=0, IDType mult=1) {
             // Instantiate coloring method if not provided
             SCMDefaultColoring<CellType, IDType> defaultColoring;
             if (coloringMethod == nullptr) {
@@ -231,6 +231,8 @@ namespace cm {
             size_t components = 3; // RGB
             // TODO: Use only line buffers (generate and save on-the-fly)
             std::vector<char> buffer(xw*yw*components);
+            // Initial image buffer contains xw pixels per line (xw*components bytes) and
+            // yw lines
             size_t buff_p;
             std::vector<IDType> cellCoord(2);
             IDType id;
@@ -248,11 +250,34 @@ namespace cm {
                 }
             }
 
+            size_t dest_p;
+            char r, g, b;
+            std::vector<char> mult_buffer(xw*yw*components*mult);
+            /**
+             * multiplied buffer contains xw*mult pixels per line (xw*mult*components bytes)
+             * but still yw lines
+             */
+            for (size_t i=0; i<yw; i++) {
+                for (size_t j=0; j<xw; j++) {
+                    // source pointer
+                    buff_p = (i*xw+j)*components;
+                    r = buffer[buff_p];
+                    g = buffer[buff_p+1];
+                    b = buffer[buff_p+2];
+                    for (size_t m=0; m<mult; m++) {
+                        dest_p = (i*xw*mult+mult*j+m)*components;
+                        mult_buffer[dest_p] = r;
+                        mult_buffer[dest_p+1] = g;
+                        mult_buffer[dest_p+2] = b;
+                    }
+                }
+            }
+
             cinfo.err = jpeg_std_error(&jerr);
             jpeg_create_compress(&cinfo);
             jpeg_stdio_dest(&cinfo, outfile);
-            cinfo.image_width      = (JDIMENSION) xw;
-            cinfo.image_height     = (JDIMENSION) yw;
+            cinfo.image_width      = (JDIMENSION) xw*mult;
+            cinfo.image_height     = (JDIMENSION) yw*mult;
             cinfo.input_components = (int) components;
             cinfo.in_color_space   = JCS_RGB;
 
@@ -260,9 +285,13 @@ namespace cm {
             jpeg_set_quality (&cinfo, 100, true); // Set the quality [0..100]
             jpeg_start_compress(&cinfo, true);
             JSAMPROW row_pointer;
-            while (cinfo.next_scanline < cinfo.image_height) {
-                row_pointer = (JSAMPROW) &(buffer.data()[cinfo.next_scanline*components*xw]);
-                jpeg_write_scanlines(&cinfo, &row_pointer, 1);
+            size_t write_h = 0;
+            while (write_h < yw) {
+                row_pointer = (JSAMPROW) &(mult_buffer.data()[write_h * cinfo.image_width * cinfo.input_components]);
+                for (size_t m=0; m<mult; m++) { // Write lines m times
+                    jpeg_write_scanlines(&cinfo, &row_pointer, 1);
+                }
+                write_h++;
             }
             jpeg_finish_compress(&cinfo);
         }

@@ -129,16 +129,17 @@ int main() {
     MicroChaosMapStatic system(P, D, alpha, delta);
 
     vec2 center = {0, 0};
-    uint32_t mult = 1;
-    uint32_t margin_h = mult * 3000 * 0;
-    uint32_t margin_v = mult * 3000 * 0;
-    uint32_t target_w = mult * 4000;
-    uint32_t target_h = mult * 3000;
+    uint32_t mult = 2;
+    uint32_t enable_margin = 1;
+    uint32_t margin_h = mult * 1500 * enable_margin;
+    uint32_t margin_v = mult * 1500 * enable_margin;
+    uint32_t target_w = mult * 2000;
+    uint32_t target_h = mult * 1000;
     vec2 width  = {2500.0 * (target_w + 2 * margin_h) / (target_w),
-                   96.0 * (target_h + 2 * margin_v) / (target_h)};
+                   72.0 * (target_h + 2 * margin_v) / (target_h)};
     vector<uint32_t> cells = {target_w + 2 * margin_h, target_h + 2 * margin_v};
 
-    vector<pair<double, string>> gradient = {
+    vector<pair<double, string>> gradient_sea = {
             {0.0, "feffff"},
             {10.0, "7accb4"},
             {60.0, "8ad9e5"},
@@ -148,11 +149,25 @@ int main() {
             {250.0, "1f5366"},
             {400.0, "173e4c"}
     };
-    GradientColouring<SCMCell<uint32_t>, uint32_t> coloringMethod3(gradient);
+    vector<pair<double, string>> gradient_isles = {
+            {0.0, "521d18"},
+            {10.0, "7b2e24"},
+            {25.0, "d9a494"},
+            {28.0, "ffe2d9"},
+            {30.0, "e5ffff"},
+            {100.0, "00b4b5"},
+            {200.0, "00658d"},
+            {300.0, "042769"},
+            {310.0, "91b8ff"},
+            {320.0, "042769"}
+    };
+    GradientColouring<SCMCell<uint32_t>, uint32_t> gradient1(gradient_sea);
+    GradientColouring<SCMCell<uint32_t>, uint32_t> gradient2(gradient_isles);
     SCM<SCMCell<uint32_t>, uint32_t, vec2> scm(center, width, cells, &system);
     scm.solve(20);
 
-    scm.generateImage("scm-microchaos-colouring_gradient.jpg", &coloringMethod3, margin_h, margin_v, cells[0] - 2 * margin_h, cells[1] - 2 * margin_v);
+    //scm.generateImage("scm-microchaos-colouring_gradient.jpg", &gradient1, margin_h, margin_v, cells[0] - 2 * margin_h, cells[1] - 2 * margin_v);
+    scm.generateImage("scm-microchaos-colouring_gradient2.jpg", &gradient2, margin_h, margin_v, cells[0] - 2 * margin_h, cells[1] - 2 * margin_v, 2);
 
     return 0;
 }

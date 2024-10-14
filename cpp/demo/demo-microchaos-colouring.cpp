@@ -63,14 +63,21 @@ vec3 rgb2hsv(vec3 rgb_int) {
     return vec3{h,s,v};
 }
 
+vec3 hexcode2rgb(std::string hexcode) {
+    return vec3{static_cast<double>(stoul(hexcode.substr(0, 2), nullptr, 16)),
+                static_cast<double>(stoul(hexcode.substr(2, 2), nullptr, 16)),
+                static_cast<double>(stoul(hexcode.substr(4, 2), nullptr, 16))
+    };
+}
+
 template <class CellType, class IDType>
-class MyColoringMethod2 : public SCMColoringMethod<CellType, IDType> {
+class GradientColouring : public SCMColoringMethod<CellType, IDType> {
 private:
     vector<pair<double, vec3>> gradient;
 public:
-    MyColoringMethod2() {
+    GradientColouring() {
         /* Sea colours using RGB inputs */
-        gradient.push_back(make_pair<double, vec3>(0, {188.0/360.0, 0.0, 1.0}));
+        gradient.push_back(make_pair<double, vec3>(0, rgb2hsv({254, 255, 255})));
         gradient.push_back(make_pair<double, vec3>(10.0,  rgb2hsv({122, 204, 180})));
         gradient.push_back(make_pair<double, vec3>(60.0,  rgb2hsv({138, 217, 229})));
         gradient.push_back(make_pair<double, vec3>(100.0, rgb2hsv({71, 178, 173})));
@@ -78,6 +85,11 @@ public:
         gradient.push_back(make_pair<double, vec3>(200.0, rgb2hsv({38, 104, 128})));
         gradient.push_back(make_pair<double, vec3>(250.0, rgb2hsv({31, 83, 102})));
         gradient.push_back(make_pair<double, vec3>(400.0, rgb2hsv({23, 62, 76})));
+    }
+    explicit GradientColouring(const vector<pair<double, string>> gradient_hex) {
+        for (auto& g : gradient_hex) {
+            gradient.push_back(make_pair(g.first, rgb2hsv(hexcode2rgb(g.second))));
+        }
     }
     std::vector<char> createColor(const CellType& cell,
                                   const IDType periodicGroups) {
@@ -126,13 +138,21 @@ int main() {
                    96.0 * (target_h + 2 * margin_v) / (target_h)};
     vector<uint32_t> cells = {target_w + 2 * margin_h, target_h + 2 * margin_v};
 
-    MyColoringMethod<SCMCell<uint32_t>, uint32_t> coloringMethod;
-    MyColoringMethod2<SCMCell<uint32_t>, uint32_t> coloringMethod2;
+    vector<pair<double, string>> gradient = {
+            {0.0, "feffff"},
+            {10.0, "7accb4"},
+            {60.0, "8ad9e5"},
+            {100.0, "47b2ad"},
+            {150.0, "3691b2"},
+            {200.0, "266880"},
+            {250.0, "1f5366"},
+            {400.0, "173e4c"}
+    };
+    GradientColouring<SCMCell<uint32_t>, uint32_t> coloringMethod3(gradient);
     SCM<SCMCell<uint32_t>, uint32_t, vec2> scm(center, width, cells, &system);
     scm.solve(20);
 
-    //scm.generateImage("scm-microchaos-colouring_a.jpg", &coloringMethod, margin_h, margin_v, cells[0] - 2 * margin_h, cells[1] - 2 * margin_v);
-    scm.generateImage("scm-microchaos-colouring_b.jpg", &coloringMethod2, margin_h, margin_v, cells[0] - 2 * margin_h, cells[1] - 2 * margin_v);
+    scm.generateImage("scm-microchaos-colouring_gradient.jpg", &coloringMethod3, margin_h, margin_v, cells[0] - 2 * margin_h, cells[1] - 2 * margin_v);
 
     return 0;
 }

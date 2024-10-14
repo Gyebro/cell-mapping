@@ -9,6 +9,8 @@ namespace cm {
 
     void hsv2rgb(double h, double s, double v, double& r, double& g, double& b);
 
+    void rgb2hsv(double r, double g, double b, double& h, double& s, double& v);
+
     template <class CellType, class IDType>
     class SCMColoringMethod {
     public:

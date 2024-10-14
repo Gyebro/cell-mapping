@@ -125,7 +125,14 @@ namespace cm {
             } // end for
             std::cout << "Number of PGs: " << periodicGroups << std::endl;
         }
-        void printSummary();
+        void printSummary() {
+            std::cout << "Summary:\n";
+            std::cout << "Number of PGs: " << periodicGroups << std::endl;
+            std::cout << "PG \tPeriodicity\n";
+            for (size_t pg=0; pg<periodicGroups; pg++) {
+                std::cout << pg << "\t" << periodicities[pg] << (pg==0?"(Sink)":"") << std::endl;
+            }
+        }
         void generateImage(std::string filepath, SCMColoringMethod<CellType, IDType>* coloringMethod=nullptr, bool emphasize = false,
                 IDType x0=0, IDType y0=0, IDType xw=0, IDType yw=0) {
             // Instantiate coloring method if not provided

@@ -25,6 +25,8 @@ public:
         gradient.push_back(make_pair<double, vec3>(100.0, {177.0/360.0, 60.0/100.0, 70.0/100.0}));
         gradient.push_back(make_pair<double, vec3>(150.0, {196.0/360.0, 70.0/100.0, 70.0/100.0}));
         gradient.push_back(make_pair<double, vec3>(200.0, {196.0/360.0, 70.0/100.0, 50.0/100.0}));
+        gradient.push_back(make_pair<double, vec3>(250.0, {196.0/360.0, 70.0/100.0, 40.0/100.0}));
+        gradient.push_back(make_pair<double, vec3>(400.0, {196.0/360.0, 70.0/100.0, 30.0/100.0}));
     }
     std::vector<char> createColor(const CellType& cell,
                                   const IDType periodicGroups) {

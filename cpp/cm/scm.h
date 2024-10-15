@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <jpeg-9a/jpeglib.h>
 #include <fstream>
+#include <algorithm>
 
 #include <iostream>
 
@@ -124,6 +125,24 @@ namespace cm {
                 }
             } // end for
             std::cout << "Number of PGs: " << periodicGroups << std::endl;
+        }
+        std::vector<IDType> getLeftGroups() {
+            std::vector<IDType> left_groups;
+            for (std::vector<IDType> pg : periodicGroupIDs) {
+                for (IDType id : pg) {
+                    if (css.getStep(id) == 0) {// Part of PG
+                        if (css.getCenter(id)[0] < 0.0) {
+                            IDType g = css.getGroup(id);
+                            if (std::count(left_groups.begin(), left_groups.end(), g) > 0) {
+                                // Groups already placed
+                            } else {
+                                left_groups.push_back(g);
+                            }
+                        }
+                    }
+                }
+            }
+            return left_groups;
         }
         void exportGroups(std::string filename, IDType dim) {
             std::ofstream out(filename);

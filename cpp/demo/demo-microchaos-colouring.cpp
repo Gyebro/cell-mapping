@@ -184,21 +184,22 @@ int main() {
 
     double P = 0.008;
     double D = 0.02;
-    double alpha = 0.08;
+    double alpha = 0.079;
     double delta = 0;
     MicroChaosMapStatic system(P, D, alpha, delta);
 
     vec2 center = {0, 0};
-    uint32_t mult = 2;
+    uint32_t mult = 1;
     uint32_t enable_margin = 1;
     uint32_t margin_h = mult * 1500 * enable_margin;
     uint32_t margin_v = mult * 1500 * enable_margin;
-    uint32_t target_w = mult * 2000;
-    uint32_t target_h = mult * 1000;
+    // Target size is 50x30cm at 300dpi -> 6000x3600, due to scaling pixels to double size, it is 3000x1800
+    uint32_t target_w = mult * 3000;
+    uint32_t target_h = mult * 1800;
     //vec2 width  = {2500.0 * (target_w + 2 * margin_h) / (target_w),
     //               72.0 * (target_h + 2 * margin_v) / (target_h)};
-    vec2 width  = {0.6*2500.0 * (target_w + 2 * margin_h) / (target_w),
-                   0.7*72.0 * (target_h + 2 * margin_v) / (target_h)};
+    vec2 width  = {5.0/4.0*(0.6*2500.0) * (target_w + 2 * margin_h) / (target_w),
+                   3.0/2.0*(0.7*72.0) * (target_h + 2 * margin_v) / (target_h)};
     vector<uint32_t> cells = {target_w + 2 * margin_h, target_h + 2 * margin_v};
 
     vector<pair<double, string>> gradient_sea = {

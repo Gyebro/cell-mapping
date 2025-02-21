@@ -8,3 +8,4 @@ add_subdirectory(libjpeg)
 add_subdirectory(cm)
 
 add_subdirectory(demo)
+add_subdirectory(interactive)

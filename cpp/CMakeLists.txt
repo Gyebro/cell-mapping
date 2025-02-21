@@ -9,3 +9,4 @@ add_subdirectory(cm)
 add_subdirectory(gnuplot_i)
 
 add_subdirectory(demo)
+add_subdirectory(interactive)

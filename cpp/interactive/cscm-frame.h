@@ -8,12 +8,15 @@
 #include <QTimer>
 #include <QVector>
 
+#include "executor.h"
+
 const int KEY_ACTION_1 = Qt::Key_C;
 
 class CSCMFrame : public QFrame {
     Q_OBJECT
   public:
     explicit CSCMFrame(QWidget* parent = 0, Qt::WindowFlags f = Qt::WindowFlags());
+    void attachExecutor(std::shared_ptr<JobExecutor> pExecutor);
     ~CSCMFrame();
 
 protected:
@@ -36,15 +39,13 @@ private:
     int startX, startY;
     int moveX, moveY;
     bool dragging;
-    QVector<QRgb> colors;
-    int gridW, gridH;
-    const int cTileW{120};
-    const int cTileH{80};
+    int gW, gH, cW, cH;
 
     uint64_t frame_count_;
     uint32_t id_counter_;
 
     QVector<QImage> cscm_images_;
+    std::shared_ptr<JobExecutor> mpExecutor;
 };
 
 #endif //CSCM_FRAME_H

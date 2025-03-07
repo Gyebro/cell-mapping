@@ -13,7 +13,8 @@ add_library(cm
 		vec3.cpp vec3.h
 		rk45.cpp rk45.h
 		coloring.cpp coloring.h
-		cscm.cpp cscm.h)
+		cscm.cpp cscm.h
+		scmb_qt.h) # TODO: Move this to another target (qt_interface)
 
 target_include_directories(cm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

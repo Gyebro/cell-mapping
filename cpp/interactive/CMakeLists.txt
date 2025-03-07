@@ -1,6 +1,8 @@
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
 set(interactive_ui_SOURCES
+        ikeda.cpp
+        executor.cpp
         cscm-frame.cpp
         interactive-cscm.cpp
 )

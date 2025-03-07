@@ -19,14 +19,8 @@ CSCMFrame::CSCMFrame(QWidget* parent, Qt::WindowFlags f)
   originX = 100; originY = 100;
   moveX = 0; moveY = 0;
   dragging = false;
-  gridW = 20; gridH = 10;
 
   srand(time(NULL));
-
-  for (size_t i=0; i< gridW*gridH; i++) {
-    QRgb randomColor = qRgb(random()%256, random()%256, random()%256);
-    colors.append(randomColor);
-  }
 
   update_timer_ = new QTimer(this);
   update_timer_->setInterval(16);
@@ -34,6 +28,14 @@ CSCMFrame::CSCMFrame(QWidget* parent, Qt::WindowFlags f)
 
   connect(update_timer_, SIGNAL(timeout()), this, SLOT(onUpdate()));
   clear();
+}
+
+void CSCMFrame::attachExecutor(std::shared_ptr<JobExecutor> pExecutor) {
+  mpExecutor = pExecutor;
+  gW = mpExecutor->gW();
+  gH = mpExecutor->gH();
+  cW = mpExecutor->cW();
+  cH = mpExecutor->cH();
 }
 
 CSCMFrame::~CSCMFrame() {
@@ -56,12 +58,11 @@ void CSCMFrame::mousePressEvent(QMouseEvent* event) {
     startY = event->y();
   } else if (event->button() == Qt::RightButton) {
     // Map click coordinate to grid tile index
-    int i = (event->x() - originX) / cTileW;
-    int j = (event->y() - originY) / cTileH;
-    if (i >= 0 && i < gridW && j >= 0 && j < gridH) {
-      std::cout << "Clicked on tile (i,j) = (" << i << "," << j << ")" << std::endl;
-      size_t index = i*gridH + j;
-      colors[index] = qRgb(random()%256, random()%256, random()%256);
+    int i = (event->x() - originX) / cW;
+    int j = (event->y() - originY) / cH;
+    if (i >= 0 && i < gW && j >= 0 && j < gH) {
+      std::cout << "Requesting update on tile (i,j) = (" << i << "," << j << ")" << std::endl;
+      mpExecutor->update(i, j);
     } else {
       std::cout << "Out of bounds" << std::endl;
     }
@@ -99,10 +100,22 @@ void CSCMFrame::paintEvent(QPaintEvent*) {
   QPainter painter(this);
   QRgb background_color = qRgb(DEFAULT_BG_R, DEFAULT_BG_G, DEFAULT_BG_B);
   painter.fillRect(0, 0, width(), height(), background_color);
-  for (size_t i=0; i<gridW; i++) {
-    for (size_t j=0; j<gridH; j++) {
-      size_t index = i*gridH + j;
-      painter.fillRect(originX+moveX+i*cTileW, originY+moveY+j*cTileH, cTileW, cTileH, colors[index]);
+  std::shared_ptr<QVector<QRgb>> colors = mpExecutor->getColors();
+  std::shared_ptr<std::vector<QImage>> results = mpExecutor->getResults();
+  auto blockMap = mpExecutor->getBlockMap();
+  for (size_t i=0; i<gW; i++) {
+    for (size_t j=0; j<gH; j++) {
+      auto loc = std::make_pair(i,j);
+      if (blockMap->contains(loc)) {
+        if (results->size() > blockMap->at(loc)) {
+          painter.drawImage(originX+moveX+i*cW, originY+moveY+j*cH, results->at(blockMap->at(loc)));
+        } else {
+          std::cout << "Result not available yet...\n";
+        }
+      } else {
+        size_t index = i*gH + j;
+        painter.fillRect(originX+moveX+i*cW, originY+moveY+j*cH, cW, cH, colors->at(index));
+      }
     }
   }
 
@@ -110,7 +123,7 @@ void CSCMFrame::paintEvent(QPaintEvent*) {
 
 void CSCMFrame::updateInternals() {
   /*
-  // Check if any background task has finished
+  // TODO: Check if any background task has finished
   if (modified) {
     update();
   }

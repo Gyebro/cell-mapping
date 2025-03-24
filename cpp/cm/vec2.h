@@ -29,6 +29,12 @@ public:
      * Operator[] for accessing the i-th component (const)
      */
     const double& operator[] (unsigned int i) const;
+    friend bool operator==(const vec2 &lhs, const vec2 &rhs) {
+        return (lhs.data[0] == rhs.data[0] && lhs.data[1] == rhs.data[1]);
+    }
+    friend bool operator!=(const vec2 &lhs, const vec2 &rhs) {
+        return !(lhs == rhs);
+    }
 };
 
 /**

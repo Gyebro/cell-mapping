@@ -228,7 +228,7 @@ namespace cm {
         const SCMUniformCellStateSpace<CellType, IDType, StateVectorType> &getCss() const {
             return css;
         }
-        SCMUniformCellStateSpace<CellType, IDType, StateVectorType> &getCss() {
+        BlockedUniformCellStateSpace<CellType, IDType, StateVectorType> &getCss() {
             return css;
         }
         IDType getPeriodicGroups() const {

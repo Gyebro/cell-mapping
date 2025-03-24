@@ -133,6 +133,97 @@ namespace cm {
             } // end for
             std::cout << "Number of PGs: " << periodicGroups << std::endl;
         }
+        void solveBlock(IDType blockId, IDType max_steps = 1) {
+            auto& block = css.getBlock(blockId);
+            int css = 0;
+            // Calculate images
+            std::cout << "Initializing block with " << block.getCellSum() << " cells\n";
+//TODO: Re-add pragma omp parallel for
+            for (IDType i=1; i<block.getCellSum(); i++) {
+                IDType steps = 0; IDType image = i;
+                StateVectorType imageState = block.getCenter(i);
+                block.getCell(i).setState(CellState::Untouched);
+                while (image == i && steps < max_steps) {
+                    imageState = systemPointer->step(imageState);
+                    image = block.getID(imageState);
+                    steps++;
+                }
+                block.setImage(i, image);
+            }
+            // Determine cell evolutions for cells
+            IDType z,p,s;
+            bool processing;
+            std::vector<IDType> sequence;
+            std::vector<IDType> newPG;
+            // Store the first PG (sink cell)
+            newPG.push_back(ID_SINK_CELL);
+            periodicGroupIDs.push_back(newPG);
+            for (IDType i = 0; i < block.getCellSum(); i++) {
+                z = i;
+                if (block.getCell(z).getState() == CellState::Untouched) {
+                    block.getCell(z).setState(CellState::UnderProcessing);
+                    processing = true;
+                    sequence.resize(0);
+                    sequence.push_back(z);
+                    // Start processing sequence for i
+                    while (processing) {
+                        z = block.getImage(z);
+                        switch (block.getCell(z).getState()) {
+                            case CellState::Untouched:
+                                // Mark cell as under processing, store in the sequence then continue
+                                block.getCell(z).setState(CellState::UnderProcessing);
+                                sequence.push_back(z);
+                                break;
+                            case CellState::UnderProcessing:
+                                // New periodic group and possibily some transients
+                                processing = false;
+                                // First find the periodic group by scanning sequence backwards
+                                s = sequence.size();
+                                p = 0;
+                                for (size_t j=0; j<s; j++) {
+                                    if (sequence[s-1-j]==z) { p = j+1; }
+                                }
+                                // Create new PG
+                                periodicities.push_back(p);
+                                periodicGroups++;						// Increase group counter
+                                newPG.resize(0);
+                                // Set properties for periodic cells,
+                                for (size_t j=0; j<p; j++) {
+                                    block.setGroup(sequence[s-1-j], periodicGroups-1);
+                                    block.setStep(sequence[s-1-j], 0);
+                                    block.getCell(sequence[s-1-j]).setState(CellState::Processed);
+                                    newPG.push_back(sequence[s-1-j]);
+                                }
+                                // Add current PG to the container
+                                periodicGroupIDs.push_back(newPG);
+                                // Set properties for transient cells
+                                for (size_t j=p; j<s; j++) {
+                                    block.setGroup(sequence[s-1-j], periodicGroups-1);
+                                    block.setStep(sequence[s-1-j], j-p+1);
+                                    block.getCell(sequence[s-1-j]).setState(CellState::Processed);
+                                }
+                                break;
+                            case CellState::Processed:
+                                // A set of transient cells leading to an already processed cell
+                                processing = false;
+                                s = sequence.size();
+                                p = block.getGroup(z);
+                                IDType step = block.getStep(z);
+                                for(size_t j=0; j<s; j++) {
+                                    block.setGroup(sequence[s-1-j], p);
+                                    block.setStep(sequence[s-1-j], step+1+j);
+                                    block.getCell(sequence[s-1-j]).setState(CellState::Processed);
+                                }
+                                break;
+                        }
+                    }
+                }
+                else if (block.getCell(z).getState() == CellState::Processed) {
+                    // Skip the cell (already processed)
+                }
+            } // end for
+            std::cout << "Number of PGs: " << periodicGroups << std::endl;
+        }
         void printSummary() {
             std::cout << "Summary:\n";
             std::cout << "Number of PGs: " << periodicGroups << std::endl;

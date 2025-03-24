@@ -1,7 +1,7 @@
 #ifndef CELL_MAPPING_CPP_CSCM_H
 #define CELL_MAPPING_CPP_CSCM_H
 
-#include "scm.h"
+#include "scmb_qt.h"
 
 namespace cm {
 
@@ -62,15 +62,18 @@ namespace cm {
         }
     };
 
+    /**
+     *  Clustered SCM algorithm designed for Blocked Uniform CSS
+     */
     template <class CellType, class IDType, class StateVectorType>
-    class ClusteredSCM {
+    class ClusteredSCMB {
     private:
-        SCM<CellType, IDType, StateVectorType>* scm1;
-        SCM<CellType, IDType, StateVectorType>* scm2;
+        BSCMQt<CellType, IDType, StateVectorType>* scm1;
         std::vector<CellTree<IDType>> cellTrees;
+        IDType newClusterId; // Holds the ID of pending (unsolved) cluster
         void join_stage1(DynamicalSystemBase<StateVectorType>* systemp,
-                         SCM<CellType, IDType, StateVectorType>* scm1p,
-                         SCM<CellType, IDType, StateVectorType>* scm2p,
+                         BSCMQt<CellType, IDType, StateVectorType>* scm1p,
+                         IDType newBlockId,
                          std::vector<IDType>& sinkDoA1) {
             /**
              * STAGE 1:
@@ -81,7 +84,7 @@ namespace cm {
              *  - Enumerate cellTrees which need to be investigated in Stage 2
              */
             IDType cmid1 = scm1p->getCss().getCell(0).getClusterID();
-            IDType cmid2 = scm2p->getCss().getCell(0).getClusterID();
+            //IDType cmid2 = scm2p->getCss().getCell(0).getClusterID();
             IDType z; IDType imz; IDType cmidz;
             std::vector<IDType> seq;
             CellTree<IDType> cellTree;
@@ -200,8 +203,8 @@ namespace cm {
                 } /* end if already processed or under_processing */
             } /* end for */
         }
-        void join_stage2(SCM<CellType, IDType, StateVectorType>* scm1p,
-                         SCM<CellType, IDType, StateVectorType>* scm2p) {
+        void join_stage2(BSCMQt<CellType, IDType, StateVectorType>* scm1p,
+                         BSCMQt<CellType, IDType, StateVectorType>* scm2p) {
             IDType cmid1 = scm1p->getCss().getCell(0).getClusterID();
             IDType cmid2 = scm2p->getCss().getCell(0).getClusterID();
             /*
@@ -313,7 +316,7 @@ namespace cm {
                                     }
                                 }
                                 processing = false;
-                                std::cout << "New " << cycle.size() <<" PG found, terminating cycle at cellTree: " << i << std::endl;
+                                //std::cout << "New " << cycle.size() <<" PG found, terminating cycle at cellTree: " << i << std::endl;
                             }
                         }
                     }
@@ -323,11 +326,12 @@ namespace cm {
                 }
             }
         }
+        void addCluster(StateVectorType center, StateVectorType width, const std::vector<IDType>& cellCounts) {
+            newClusterId = scm1->addBlock(center, width, cellCounts);
+        }
     public:
-        ClusteredSCM(SCM<CellType, IDType, StateVectorType>* scm1p,
-                     SCM<CellType, IDType, StateVectorType>* scm2p) {
-            ClusteredSCM::scm1 = scm1p;
-            ClusteredSCM::scm2 = scm2p;
+        ClusteredSCMB(BSCMQt<CellType, IDType, StateVectorType>* scm1p) {
+            scm1 = scm1p;
         }
         /**
          * Finds the index of the image of a CellTree within the container cellPaths
@@ -358,26 +362,26 @@ namespace cm {
         /**
          * Joins the two SCM solutions
          */
-        void join(bool verbose = false) {
+        void join(StateVectorType center, StateVectorType width, const std::vector<IDType>& cellCounts, bool verbose = false) {
             /* TODO: Check overlap between the two SCM state spaces, raise error
              * TODO: Check whether the two systems are the same!
              */
+            addCluster(center, width, cellCounts);
+            // Solve new block (standard SCM)
+            // Set group shift group numbers
+            IDType groupshift = scm1->getPeriodicGroups();
+
             // Get the DoA of sink cell for both SCMs
             std::vector<IDType> sinkDoA1;
             std::vector<IDType> sinkDoA2;
             if (verbose) std::cout << "\nInitialization: " << std::endl;
             size_t scm1count = scm1->getCss().getCellSum();
             size_t scm2count = scm2->getCss().getCellSum();
+            // TODO: cmid1 refers to existing clustered solution, cmid2 refers to new single block (cluster)
+
             IDType cmid1 = scm1->getCss().getCell(0).getClusterID();
             IDType cmid2 = scm2->getCss().getCell(0).getClusterID();
-            ClusteredSCMDefaultColoring<CellType, IDType> coloringMethod;
-            if (cmid2 == cmid1) {
-                cmid2++;
-        #pragma omp parallel for
-                for(size_t i=0; i<scm2count; i++) {
-                    scm2->getCss().getCell(i).setClusterID(cmid2);
-                }
-            }
+
             // TODO: Check if two SCMs use the same dynamical system!
             DynamicalSystemBase<StateVectorType>* systemp = scm1->getSystemPointer();
             for(size_t i=1; i<scm1count; i++) {
@@ -386,6 +390,7 @@ namespace cm {
                     scm1->getCss().getCell(i).setState(CellState::Untouched);
                 }
             }
+            // Get sink DoA of new block
             for(size_t i=1; i<scm2count; i++) {
                 if (scm2->getCss().getCell(i).getGroup() == 0) {
                     sinkDoA2.push_back(i);
@@ -404,6 +409,7 @@ namespace cm {
             }
 
             cellTrees.resize(0);
+            // TODO: rework join stage 1
             join_stage1(systemp, scm1, scm2, sinkDoA1);
             join_stage1(systemp, scm2, scm1, sinkDoA2);
             IDType pathsum = 0;
@@ -467,31 +473,10 @@ namespace cm {
                 std::cout << " Processed cell trees: " << processedPaths << std::endl;
             }
 
-            // Shift SCM2's group numbers
-            IDType groupshift = scm1->getPeriodicGroups();
-            IDType totalgroups = scm1->getPeriodicGroups() + scm2->getPeriodicGroups();
-            scm1->setPeriodicGroups(totalgroups);
-            scm2->setPeriodicGroups(totalgroups);
-        #pragma omp parallel for
-            // TODO: getCellSum should be N+1
-            for (IDType z=1; z<scm1->getCss().getCellSum(); z++) {
-                if (scm1->getCss().getCell(z).getClusterID() == cmid2 && scm1->getCss().getCell(z).getGroup() != 0) {
-                    scm1->getCss().getCell(z).setGroup(scm1->getCss().getCell(z).getGroup()+groupshift);
-                }
-            }
-        #pragma omp parallel for
-            for (IDType z=1; z<scm2->getCss().getCellSum(); z++) {
-                if (scm2->getCss().getCell(z).getClusterID() == cmid2 && scm2->getCss().getCell(z).getGroup() != 0) {
-                    scm2->getCss().getCell(z).setGroup(scm2->getCss().getCell(z).getGroup()+groupshift);
-                }
-            }
-            if (verbose) {
-                scm1->generateImage("scm1_joined.jpg", &coloringMethod);
-                scm2->generateImage("scm2_joined.jpg", &coloringMethod);
-            }
+            // TODO: Update images (Qt Qimages)
         }
         /**
-         * Merges the two SCMs into a single SCM object
+         * Merges the two SCMs into a single SCM object, TODO: This won't be necessary
          */
         void merge(bool verbose = false) {
 

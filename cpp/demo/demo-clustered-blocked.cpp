@@ -17,19 +17,16 @@ int main() {
     vec2 center = {185.4, 0};
     vec2 width  = {200, 25};
     vector<uint32_t> cells = {1000, 1000};
+    size_t max_steps = 20;
 
     BSCM<ClusterableSCMCell<uint32_t>, uint32_t, vec2> scm1(center, width, cells, &system);
-    scm1.solve(20);
+    scm1.solve(max_steps);
     scm1.generateImage("cb_scm1_initial.jpg");
 
-    vec2 center2 = center + vec2({width[0], 0});
-    BSCM<ClusterableSCMCell<uint32_t>, uint32_t, vec2> scm2(center2, width, cells, &system);
-    scm2.solve(20);
-    scm2.generateImage("cb_scm2_initial.jpg");
-
-    ClusteredSCMB cscm(&scm1, &scm2);
+    ClusteredSCMB cscm(&scm1);
     bool verbose = true; // This will generate output images after the joining procedure
-    cscm.join(verbose);
+    vec2 center2 = center + vec2({width[0], 0});
+    cscm.join(center2, width, cells, max_steps, verbose);
 
     // Create a full-size SCM for validation
     cout << "\nValidation:\n";

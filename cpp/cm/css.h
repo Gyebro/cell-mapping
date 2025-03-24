@@ -175,15 +175,19 @@ namespace cm {
         const UniformCellStateSpace<CellType, IDType, StateVectorType>& getBlock(IDType bid) const {
             return ucss[bid];
         }
+        UniformCellStateSpace<CellType, IDType, StateVectorType>& getBlock(IDType bid) {
+            return ucss[bid];
+        }
         const IDType getBlockCount() const {
             return blockSizes.size();
         }
-        void addBlock(UniformCellStateSpace<CellType, IDType, StateVectorType> css) {
+        IDType addBlock(UniformCellStateSpace<CellType, IDType, StateVectorType> css) {
             // TODO: This will be a copy for debug purposes first! Optimize this!
             ucss.push_back(css);
             blockSizes.push_back(css.getCellSum()+1);
             // TODO: Possible overflow! FIXME css.getcellSum currently returns N, but there's N+1 cells, last valid index is N.
             // TODO: Logic -> check if CSS block overlaps with others!
+            return ucss.size()-1;
         }
         /*IDType getIDFromCellCoord(std::vector<IDType> cellCoord) {
             IDType id = 0;

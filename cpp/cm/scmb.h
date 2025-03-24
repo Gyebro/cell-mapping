@@ -29,9 +29,9 @@ namespace cm {
             periodicities.resize(0);
             periodicGroupIDs.resize(0);
         }
-        void addBlock(StateVectorType center, StateVectorType width, const std::vector<IDType>& cellCounts) {
+        IDType addBlock(StateVectorType center, StateVectorType width, const std::vector<IDType>& cellCounts) {
             SCMUniformCellStateSpace<CellType, IDType, StateVectorType> block(center, width, cellCounts);
-            css.addBlock(block);
+            return css.addBlock(block);
         }
         void solve(IDType max_steps = 1) {
             // Calculate images
@@ -60,6 +60,98 @@ namespace cm {
             newPG.push_back(ID_SINK_CELL);
             periodicGroupIDs.push_back(newPG);
             for (IDType i = 0; i < css.getCellSum(); i++) {
+                z = i;
+                if (css.getCell(z).getState() == CellState::Untouched) {
+                    css.getCell(z).setState(CellState::UnderProcessing);
+                    processing = true;
+                    sequence.resize(0);
+                    sequence.push_back(z);
+                    // Start processing sequence for i
+                    while (processing) {
+                        z = css.getImage(z);
+                        switch (css.getCell(z).getState()) {
+                            case CellState::Untouched:
+                                // Mark cell as under processing, store in the sequence then continue
+                                css.getCell(z).setState(CellState::UnderProcessing);
+                                sequence.push_back(z);
+                                break;
+                            case CellState::UnderProcessing:
+                                // New periodic group and possibily some transients
+                                processing = false;
+                                // First find the periodic group by scanning sequence backwards
+                                s = sequence.size();
+                                p = 0;
+                                for (size_t j=0; j<s; j++) {
+                                    if (sequence[s-1-j]==z) { p = j+1; }
+                                }
+                                // Create new PG
+                                periodicities.push_back(p);
+                                periodicGroups++;						// Increase group counter
+                                newPG.resize(0);
+                                // Set properties for periodic cells,
+                                for (size_t j=0; j<p; j++) {
+                                    css.setGroup(sequence[s-1-j], periodicGroups-1);
+                                    css.setStep(sequence[s-1-j], 0);
+                                    css.getCell(sequence[s-1-j]).setState(CellState::Processed);
+                                    newPG.push_back(sequence[s-1-j]);
+                                }
+                                // Add current PG to the container
+                                periodicGroupIDs.push_back(newPG);
+                                // Set properties for transient cells
+                                for (size_t j=p; j<s; j++) {
+                                    css.setGroup(sequence[s-1-j], periodicGroups-1);
+                                    css.setStep(sequence[s-1-j], j-p+1);
+                                    css.getCell(sequence[s-1-j]).setState(CellState::Processed);
+                                }
+                                break;
+                            case CellState::Processed:
+                                // A set of transient cells leading to an already processed cell
+                                processing = false;
+                                s = sequence.size();
+                                p = css.getGroup(z);
+                                IDType step = css.getStep(z);
+                                for(size_t j=0; j<s; j++) {
+                                    css.setGroup(sequence[s-1-j], p);
+                                    css.setStep(sequence[s-1-j], step+1+j);
+                                    css.getCell(sequence[s-1-j]).setState(CellState::Processed);
+                                }
+                                break;
+                        }
+                    }
+                }
+                else if (css.getCell(z).getState() == CellState::Processed) {
+                    // Skip the cell (already processed)
+                }
+            } // end for
+            std::cout << "Number of PGs: " << periodicGroups << std::endl;
+        }
+        void solveBlock(IDType bid, IDType max_steps = 1) {
+            std::cout << "Calculating partial SCM solution for block " << bid << ", " << css.getBlock(bid).getCellSum() << " cells\n";
+            auto& block = css.getBlock(bid);
+            // Calculate image cells (global IDs) for new block only
+//TODO: Re-add pragma omp parallel for
+            for (IDType local_i=1; local_i<block.getCellSum(); local_i++) { // Loop over local indices
+                IDType steps = 0;
+                StateVectorType imageState = block.getCenter(local_i);
+                // Resolve local id to global ID
+                IDType self = css.getID(imageState);
+                IDType image = self;
+                block.getCell(local_i).setState(CellState::Untouched);
+                while (image == self && steps < max_steps) {
+                    imageState = systemPointer->step(imageState);
+                    image = css.getID(imageState);
+                    steps++;
+                }
+                block.getCell(local_i).setImage(image);
+            }
+            // Note: periodic groups and their counters are already initialized
+            // Determine cell evolutions for cells
+            IDType z,p,s;
+            bool processing;
+            std::vector<IDType> sequence;
+            std::vector<IDType> newPG;
+            for (IDType local_i = 1; local_i < block.getCellSum(); local_i++) {
+                IDType i = css.getID(block.getCenter(local_i)); // Global id corresponding to block-local id
                 z = i;
                 if (css.getCell(z).getState() == CellState::Untouched) {
                     css.getCell(z).setState(CellState::UnderProcessing);

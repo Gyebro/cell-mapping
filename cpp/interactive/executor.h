@@ -11,6 +11,7 @@
 #include "cmlib.h"
 #include "scmb_qt.h"
 #include "ikeda.h"
+#include "microchaos.h"
 
 using namespace cm;
 
@@ -28,7 +29,6 @@ public:
         blockCenters.push_back({mCenter[0], mCenter[1]});
         mBlockIdMap->operator[](std::make_pair(0,0)) = 0; // Initial zone is at (0,0)
         mpSCM = std::make_shared<BSCMQt<SCMCell<uint32_t>, uint32_t, vec2>>(blockCenters[0], mWidth, mCells, &mMap);
-
         run();
     }
     std::shared_ptr<QVector<QRgb>> getColors() {
@@ -41,41 +41,48 @@ public:
         return mBlockIdMap;
     }
     void update(size_t i, size_t j, bool rerun=true) {
-        //const size_t index = i*gridH + j;
-        //colors->data()[index] = qRgb(random()%256, random()%256, random()%256);
-        blockCenters.push_back({mCenter[0]+i*mWidth[0], mCenter[1]-j*mWidth[1]});
-        size_t id = mpSCM->addBlock(blockCenters.back(), mWidth, mCells);
-        mBlockIdMap->operator[](std::make_pair(i,j)) = id;
-        if (rerun) run();
+        vec2 newCenter = {mCenter[0]+i*mWidth[0], mCenter[1]-j*mWidth[1]};
+        if (std::find(blockCenters.begin(), blockCenters.end(), newCenter) == blockCenters.end()) {
+            blockCenters.push_back(newCenter);
+            size_t id = mpSCM->addBlock(blockCenters.back(), mWidth, mCells);
+            mBlockIdMap->operator[](std::make_pair(i,j)) = id;
+            if (rerun) run();
+        } else {
+            std::cout << "Block already present in solution!" << std::endl;
+        }
     }
     void run() {
         mpSCM->solve(1);
         mpSCM->generateImage(&mColoringMethod);
     }
-    int gW() const {
+    [[nodiscard]] int gW() const {
         return gridW;
     }
-    int gH() const {
+    [[nodiscard]] int gH() const {
         return gridH;
     }
-    int cW() const {
+    [[nodiscard]] int cW() const {
         return cTileW;
     }
-    int cH() const {
+    [[nodiscard]] int cH() const {
         return cTileH;
     }
 private:
-    int gridW{8}, gridH{6};
-    const uint32_t cTileW{120};
+    int gridW{24}, gridH{6};
+    const uint32_t cTileW{120}; // TODO: Tile aspect ratio
     const uint32_t cTileH{80};
     std::shared_ptr<QVector<QRgb>> colors;
     std::shared_ptr<BSCMQt<SCMCell<uint32_t>, uint32_t, vec2>> mpSCM;
     std::vector<vec2> blockCenters;
-    IkedaMap mMap{0.96};
+    //IkedaMap mMap{0.96};
+    //vec2 mWidth{6.0, 6.0}; // State space tile width
+    ///vec2 mCenter{-3*6.0, 3*6.0}; // State space center
+    MicroChaosMapStatic mMap{0.007, 0.02, 0.07, 0.0};
+    vec2 mWidth{24.0, 2.0}; // State space tile width
+    vec2 mCenter{-200, 6.0}; // State space center
     SCMHeatMapColoring<SCMCell<uint32_t>, uint32_t> mColoringMethod;
     std::vector<uint32_t> mCells = {cTileW, cTileH}; // State space tile cell counts
-    vec2 mWidth{6.0, 6.0}; // State space tile width
-    vec2 mCenter{-3*6.0, 3*6.0}; // State space center
+
     std::shared_ptr<std::map<std::pair<size_t, size_t>, size_t>> mBlockIdMap;
 };
 

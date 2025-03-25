@@ -16,6 +16,7 @@ add_executable(interactive-cscm ${interactive_ui_SOURCES} ${interactive_MOCS})
 target_link_libraries(interactive-cscm Qt5::Widgets cm)
 
 find_package(OpenMP)
+
 if(OpenMP_CXX_FOUND)
     target_link_libraries(interactive-cscm OpenMP::OpenMP_CXX)
 endif()

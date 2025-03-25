@@ -9,7 +9,6 @@
 #include <QVector>
 
 #include "cmlib.h"
-#include "scmb_qt.h"
 #include "ikeda.h"
 #include "microchaos.h"
 
@@ -29,7 +28,8 @@ public:
         blockCenters.push_back({mCenter[0], mCenter[1]});
         mBlockIdMap->operator[](std::make_pair(0,0)) = 0; // Initial zone is at (0,0)
         mpSCM = std::make_shared<BSCMQt<SCMCell<uint32_t>, uint32_t, vec2>>(blockCenters[0], mWidth, mCells, &mMap);
-        run();
+        mpSCM->solve(scm_max_steps);
+        mpSCM->generateImage("interactive_cscm", &mColoringMethod);
     }
     std::shared_ptr<QVector<QRgb>> getColors() {
         return colors;
@@ -40,20 +40,20 @@ public:
     std::shared_ptr<std::map<std::pair<size_t, size_t>, size_t>> getBlockMap() {
         return mBlockIdMap;
     }
-    void update(size_t i, size_t j, bool rerun=true) {
+    void update(size_t i, size_t j, bool run=true) {
         vec2 newCenter = {mCenter[0]+i*mWidth[0], mCenter[1]-j*mWidth[1]};
         if (std::find(blockCenters.begin(), blockCenters.end(), newCenter) == blockCenters.end()) {
             blockCenters.push_back(newCenter);
-            size_t id = mpSCM->addBlock(blockCenters.back(), mWidth, mCells);
+            size_t id = mpSCM->addImageBlock(blockCenters.back(), mWidth, mCells);
             mBlockIdMap->operator[](std::make_pair(i,j)) = id;
-            if (rerun) run();
+            if (run) rerun();
         } else {
             std::cout << "Block already present in solution!" << std::endl;
         }
     }
-    void run() {
-        mpSCM->solve(1);
-        mpSCM->generateImage(&mColoringMethod);
+    void rerun() {
+        mpSCM->update(scm_max_steps);
+        mpSCM->generateImage("interactive_cscm", &mColoringMethod);
     }
     [[nodiscard]] int gW() const {
         return gridW;
@@ -74,6 +74,7 @@ private:
     std::shared_ptr<QVector<QRgb>> colors;
     std::shared_ptr<BSCMQt<SCMCell<uint32_t>, uint32_t, vec2>> mpSCM;
     std::vector<vec2> blockCenters;
+    int scm_max_steps{20};
     //IkedaMap mMap{0.96};
     //vec2 mWidth{6.0, 6.0}; // State space tile width
     ///vec2 mCenter{-3*6.0, 3*6.0}; // State space center

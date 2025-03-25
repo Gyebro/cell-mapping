@@ -201,7 +201,7 @@ namespace cm {
                 if (id != 0) {
                     break; // If CSSs are not overlapping, only one CSS should return nonzero ID.
                 } else {
-                    block++;
+                    block++; // Retry in next block
                 }
             }
             if (id==ID_SINK_CELL) block = 0; // Tie sink cell to block 0

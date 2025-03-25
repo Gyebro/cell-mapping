@@ -5,6 +5,7 @@
 #include "system.h"
 #include "coloring.h"
 #include <stdio.h>
+#include <cassert>
 #include <jpeg-9a/jpeglib.h>
 
 #include <iostream>
@@ -20,6 +21,8 @@ namespace cm {
         IDType periodicGroups;
         std::vector<std::vector<IDType>> periodicGroupIDs;
         std::vector<IDType> periodicities;
+        std::vector<IDType> unsolvedBlocks;
+        IDType invalidatedCount;
     public:
         BSCM(StateVectorType center, StateVectorType width, const std::vector<IDType>& cellCounts,
             DynamicalSystemBase<StateVectorType> *systemPointer) : systemPointer(systemPointer) {
@@ -31,11 +34,13 @@ namespace cm {
         }
         IDType addBlock(StateVectorType center, StateVectorType width, const std::vector<IDType>& cellCounts) {
             SCMUniformCellStateSpace<CellType, IDType, StateVectorType> block(center, width, cellCounts);
-            return css.addBlock(block);
+            auto newBlock = css.addBlock(block);
+            unsolvedBlocks.push_back(newBlock);
+            return newBlock;
         }
         void solve(IDType max_steps = 1) {
             // Calculate images
-            std::cout << "Initializing Cell state space with " << css.getCellSum() << " cells\n";
+            std::cout << "Initializing Cell state space with " << css.getCellSum() << " cells\n"; // Note: css.getCellSum includes sink(s)
 //TODO: Re-add pragma omp parallel for
             for (IDType i=1; i<css.getCellSum(); i++) {
                 IDType steps = 0; IDType image = i;
@@ -118,19 +123,22 @@ namespace cm {
                                 break;
                         }
                     }
-                }
-                else if (css.getCell(z).getState() == CellState::Processed) {
+                } else {
                     // Skip the cell (already processed)
                 }
             } // end for
             std::cout << "Number of PGs: " << periodicGroups << std::endl;
         }
-        void solveBlock(IDType bid, IDType max_steps = 1) {
-            std::cout << "Calculating partial SCM solution for block " << bid << ", " << css.getBlock(bid).getCellSum() << " cells\n";
+        void reSolve(IDType max_steps = 1) {
+            assert(unsolvedBlocks.size() == 1);
+            IDType bid = unsolvedBlocks.front();
             auto& block = css.getBlock(bid);
+            IDType bidSum = block.getCellSum()+1; // Include new (unused) sink
+            std::cout << "Calculating SCM solution for invalidated cells and new block " << bid << ", (" << bidSum << " cells)\n";
+            // Note: image of invalidated cells whose lead to (old) sink cell was already recalculated pointing to the new block
             // Calculate image cells (global IDs) for new block only
 //TODO: Re-add pragma omp parallel for
-            for (IDType local_i=1; local_i<block.getCellSum(); local_i++) { // Loop over local indices
+            for (IDType local_i=1; local_i<bidSum; local_i++) { // Loop over local indices
                 IDType steps = 0;
                 StateVectorType imageState = block.getCenter(local_i);
                 // Resolve local id to global ID
@@ -150,8 +158,11 @@ namespace cm {
             bool processing;
             std::vector<IDType> sequence;
             std::vector<IDType> newPG;
-            for (IDType local_i = 1; local_i < block.getCellSum(); local_i++) {
-                IDType i = css.getID(block.getCenter(local_i)); // Global id corresponding to block-local id
+            IDType updated_count = 0;
+            IDType expected_updates = bidSum + invalidatedCount;
+            std::cout << "resolve(): should update " << expected_updates << " cells..." << std::endl;
+            // TODO: Deal with multiple sink cells! New sink will somehow gets resolved in the next loop
+            for (IDType i = 0; i < css.getCellSum(); i++) {
                 z = i;
                 if (css.getCell(z).getState() == CellState::Untouched) {
                     css.getCell(z).setState(CellState::UnderProcessing);
@@ -174,7 +185,10 @@ namespace cm {
                                 s = sequence.size();
                                 p = 0;
                                 for (size_t j=0; j<s; j++) {
-                                    if (sequence[s-1-j]==z) { p = j+1; }
+                                    if (sequence[s-1-j]==z) {
+                                        p = j+1;
+                                        //std::cout << "sequence closure at id: " << z << ", pos: " << css.getCenter(z)[0] << "," << css.getCenter(z)[1] << std::endl;
+                                    }
                                 }
                                 // Create new PG
                                 periodicities.push_back(p);
@@ -185,6 +199,7 @@ namespace cm {
                                     css.setGroup(sequence[s-1-j], periodicGroups-1);
                                     css.setStep(sequence[s-1-j], 0);
                                     css.getCell(sequence[s-1-j]).setState(CellState::Processed);
+                                    updated_count++;
                                     newPG.push_back(sequence[s-1-j]);
                                 }
                                 // Add current PG to the container
@@ -194,7 +209,9 @@ namespace cm {
                                     css.setGroup(sequence[s-1-j], periodicGroups-1);
                                     css.setStep(sequence[s-1-j], j-p+1);
                                     css.getCell(sequence[s-1-j]).setState(CellState::Processed);
+                                    updated_count++;
                                 }
+                                //std::cout << "New PG found during 'resolve', periodicity: " << newPG.size() << std::endl;
                                 break;
                             case CellState::Processed:
                                 // A set of transient cells leading to an already processed cell
@@ -206,16 +223,123 @@ namespace cm {
                                     css.setGroup(sequence[s-1-j], p);
                                     css.setStep(sequence[s-1-j], step+1+j);
                                     css.getCell(sequence[s-1-j]).setState(CellState::Processed);
+                                    updated_count++;
                                 }
                                 break;
                         }
                     }
                 }
-                else if (css.getCell(z).getState() == CellState::Processed) {
+                else {
                     // Skip the cell (already processed)
                 }
             } // end for
+            std::cout << "resolve(): updated " << updated_count << " cells!" << std::endl;
+            std::cout << "Matching expected amount: " << (updated_count == expected_updates ? "OK" : "Error") << std::endl;
+            unsolvedBlocks.pop_back();
             std::cout << "Number of PGs: " << periodicGroups << std::endl;
+        }
+
+        /**
+         * Update the SCM solution by applying Clustered-SCM paradigm to join new, unsolved blocks to the existing solution
+         * The simplest version would be to invalidate the DoA of Sink and re-run the solution
+         * A better approach is to only invalidate the DoA of the new SCM block(s)
+         * @param max_steps
+         */
+        void update(IDType max_steps = 1) {
+            assert(unsolvedBlocks.size() == 1);
+            for (IDType & bid : unsolvedBlocks) {
+                // Prepare joining block with 'bid'
+                auto& block = css.getBlock(bid);
+                // Find the sink DoA of original solution
+                IDType cellSum = css.getCellSum();
+                std::vector<IDType> sinkDoA;
+                for(size_t i=1; i<cellSum; i++) { // TODO: reduce cellSum by subtracting ID range of new blocks
+                    if (css.getCell(i).getState() == CellState::Processed) {
+                        if (css.getCell(i).getGroup() == ID_SINK_CELL) {
+                            sinkDoA.push_back(i);
+                            css.getCell(i).setState(CellState::Untouched);
+                        }
+                    } else {
+                        // Untouched cells belong to new blocks
+                    }
+                }
+                std::cout << "Size of Sink DoA: " << sinkDoA.size() << std::endl;
+                // Find the subset which leads to the new bid and invalidate them
+                IDType z,p,s;
+                bool processing;
+                std::vector<IDType> invalidatedCells;
+                IDType zbid, lid;
+                StateVectorType loc;
+                std::vector<IDType> sequence;
+                /*  This is an SCM like update where we know that all cells are transient and will lead either to
+                 *  the reduced sink or to the new block
+                 */
+                for (IDType& i : sinkDoA) {
+                    z = i;
+                    if (css.getCell(z).getState() == CellState::Untouched) {
+                        css.getCell(z).setState(CellState::UnderProcessing);
+                        processing = true;
+                        sequence.resize(0);
+                        sequence.push_back(z);
+                        // Start processing sequence for i
+                        while (processing) {
+                            z = css.getImage(z);
+                            switch (css.getCell(z).getState()) {
+                                case CellState::Untouched:
+                                    // Mark cell as under processing, store in the sequence then continue
+                                    css.getCell(z).setState(CellState::UnderProcessing);
+                                    sequence.push_back(z);
+                                break;
+                                case CellState::UnderProcessing:
+                                    // In this pass, Under Processing state refers to sequences leading to the new block
+                                    processing = false;
+                                    s = sequence.size();
+                                    for (size_t j=0; j<s; j++) {
+                                        css.getCell(sequence[j]).setState(CellState::UnderProcessing);
+                                        invalidatedCells.push_back(sequence[j]);
+                                    }
+                                break;
+                                case CellState::Processed:
+                                    // A set of transient cells leading to an already processed cell
+                                    processing = false;
+                                    s = sequence.size();
+                                    p = css.getGroup(z);
+                                    assert(p == ID_SINK_CELL);
+                                    // Calculate terminal state of the sequence
+                                    loc = css.getCenter(sequence.back());
+                                    loc = systemPointer->step(loc);
+                                    // Determine if this image points to the real sink or to the new block
+                                    IDType newLID = css.getBlock(bid).getID(loc); // Local id
+                                    if (newLID == ID_SINK_CELL) {
+                                        // Sequence leads to real sink
+                                        for(size_t j=0; j<s; j++) {
+                                            // Restore processed state
+                                            css.getCell(sequence[s-1-j]).setState(CellState::Processed);
+                                        }
+                                    } else {
+                                        // Update image pointing to new block
+                                        IDType newGID = css.getID(loc); // Local id
+                                        css.getCell(sequence.back()).setImage(newGID);
+                                        // Sequence leads to new block, invalidate this sequence
+                                        // TODO: Could be done in a single pass, but now just gather cell IDs
+                                        for(size_t j=0; j<s; j++) {
+                                            css.getCell(sequence[j]).setState(CellState::UnderProcessing);
+                                            invalidatedCells.push_back(sequence[j]);
+                                        }
+                                    }
+                                break;
+                            }
+                        }
+                    } else {
+                        // Skip the cell (already processed or "leading to new bid")
+                    }
+                } // end for sinkDoA
+                invalidatedCount = invalidatedCells.size();
+                std::cout << "Invalidating " << invalidatedCount << " cells" << std::endl;
+                for (IDType& i : invalidatedCells) {
+                    css.getCell(i).setState(CellState::Untouched);
+                }
+            }
         }
         void printSummary() {
             std::cout << "Summary:\n";

@@ -12,7 +12,7 @@ namespace cm {
         std::vector<IDType> cells;
         CellState state;
         IDType imageCell; /// This image always belongs to the another-cmid SCM solution
-        IDType imageCmid; // TODO: Rename CMID to ClasterID
+        IDType imageCmid; // TODO: Rename CMID to ClusterID
     public:
         CellTree() {
             state = CellState::Untouched;

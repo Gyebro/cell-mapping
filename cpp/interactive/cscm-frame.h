@@ -5,6 +5,7 @@
 #include <QImage>
 #include <QPaintEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include <QTimer>
 #include <QVector>
 

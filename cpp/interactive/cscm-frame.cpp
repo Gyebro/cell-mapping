@@ -14,9 +14,9 @@ CSCMFrame::CSCMFrame(QWidget* parent, Qt::WindowFlags f)
   : QFrame(parent, f)
   , frame_count_(0)
   , id_counter_(0) {
-  setFixedSize(1000, 640);
+  setFixedSize(1280, 1024);
   setWindowTitle("CSCM explorer");
-  originX = 100; originY = 100;
+  originX = -1000; originY = -300;
   moveX = 0; moveY = 0;
   dragging = false;
 
@@ -100,9 +100,9 @@ void CSCMFrame::paintEvent(QPaintEvent*) {
   QPainter painter(this);
   QRgb background_color = qRgb(DEFAULT_BG_R, DEFAULT_BG_G, DEFAULT_BG_B);
   painter.fillRect(0, 0, width(), height(), background_color);
-  std::shared_ptr<QVector<QRgb>> colors = mpExecutor->getColors();
   std::shared_ptr<std::vector<QImage>> results = mpExecutor->getResults();
   auto blockMap = mpExecutor->getBlockMap();
+  QPen pen(Qt::white, 1);
   for (size_t i=0; i<gW; i++) {
     for (size_t j=0; j<gH; j++) {
       auto loc = std::make_pair(i,j);
@@ -113,8 +113,12 @@ void CSCMFrame::paintEvent(QPaintEvent*) {
           std::cout << "Result not available yet...\n";
         }
       } else {
-        size_t index = i*gH + j;
-        painter.fillRect(originX+moveX+i*cW, originY+moveY+j*cH, cW, cH, colors->at(index));
+        //size_t index = i*gH + j;
+        QPainterPath path;
+        path.addRect(originX+moveX+i*cW, originY+moveY+j*cH, cW, cH);
+        painter.setPen(pen);
+        painter.fillRect(originX+moveX+i*cW, originY+moveY+j*cH, cW, cH, Qt::black);
+        painter.drawPath(path);
       }
     }
   }

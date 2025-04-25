@@ -18,5 +18,6 @@ target_link_libraries(interactive-cscm Qt5::Widgets cm)
 find_package(OpenMP)
 
 if(OpenMP_CXX_FOUND)
+    message(INFO " accelerating with OpenMP")
     target_link_libraries(interactive-cscm OpenMP::OpenMP_CXX)
 endif()

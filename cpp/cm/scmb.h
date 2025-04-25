@@ -155,6 +155,7 @@ namespace cm {
             // Calculate images
             std::cout << "Initializing Cell state space with " << css.getCellSum() << " cells\n"; // Note: css.getCellSum includes sink(s)
 //TODO: Re-add pragma omp parallel for
+#pragma omp parallel for
             for (IDType i=1; i<css.getCellSum(); i++) {
                 IDType steps = 0; IDType image = i;
                 StateVectorType imageState = css.getCenter(i);

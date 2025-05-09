@@ -5,7 +5,8 @@ add_library(systems
     lorenz.cpp
     microchaos.cpp
     pendulum.cpp
-    rolling.cpp)
+    rolling.cpp
+    lozi.cpp)
 
 target_include_directories(systems PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(systems PUBLIC ${CMAKE_SOURCE_DIR}/cm)

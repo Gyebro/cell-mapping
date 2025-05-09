@@ -16,7 +16,7 @@ CSCMFrame::CSCMFrame(QWidget* parent, Qt::WindowFlags f)
   , id_counter_(0) {
   setFixedSize(1280, 1024);
   setWindowTitle("CSCM explorer");
-  originX = -1000; originY = -300;
+  originX = 0; originY = 0;
   moveX = 0; moveY = 0;
   dragging = false;
 
@@ -42,9 +42,8 @@ CSCMFrame::~CSCMFrame() {
   delete update_timer_;
 }
 
-
 void CSCMFrame::reset() {
-  mpExecutor->reset();
+  mpExecutor->reset(JobExecutor::SystemMicroChaosStatic);
 }
 
 void CSCMFrame::clear() {

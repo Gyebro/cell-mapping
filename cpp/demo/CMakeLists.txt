@@ -11,6 +11,7 @@ add_executable(demo-rotation   demo-rotation.cpp)
 add_executable(demo-colouring  demo-microchaos-colouring.cpp)
 add_executable(demo-microchaos-bif  demo-microchaos-bif.cpp)
 add_executable(demo-microchaos-3D  demo-microchaos-3.cpp)
+add_executable(demo-lozi demo-lozi.cpp)
 
 set(CM_LIBS systems cm)
 
@@ -27,6 +28,7 @@ target_link_libraries(demo-rotation   LINK_PUBLIC ${CM_LIBS})
 target_link_libraries(demo-colouring  LINK_PUBLIC ${CM_LIBS})
 target_link_libraries(demo-microchaos-bif LINK_PUBLIC ${CM_LIBS})
 target_link_libraries(demo-microchaos-3D  LINK_PUBLIC ${CM_LIBS} gnuplot_i)
+target_link_libraries(demo-lozi LINK_PUBLIC ${CM_LIBS})
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
@@ -43,6 +45,7 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(demo-colouring   PUBLIC OpenMP::OpenMP_CXX)
     target_link_libraries(demo-microchaos-bif   PUBLIC OpenMP::OpenMP_CXX)
     target_link_libraries(demo-microchaos-3D   PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(demo-lozi   PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 add_custom_target(all-demos)

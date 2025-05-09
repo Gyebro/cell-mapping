@@ -10,6 +10,7 @@
 
 #include "cmlib.h"
 #include "ikeda.h"
+#include "lozi.h"
 #include "microchaos.h"
 
 using namespace cm;
@@ -18,13 +19,12 @@ using namespace cm;
 
 class JobExecutor {
 public:
+    enum SystemTypes {
+        SystemMicroChaosStatic,
+        SystemIkedaMap
+    };
     JobExecutor() {
-        mBlockIdMap = std::make_shared<std::map<std::pair<size_t, size_t>, size_t>>();
-        blockCenters.push_back({mCenter[0], mCenter[1]});
-        mBlockIdMap->operator[](std::make_pair(0,0)) = 0; // Initial zone is at (0,0)
-        mpSCM = std::make_shared<BSCMQt<SCMCell<uint32_t>, uint32_t, vec2>>(blockCenters[0], mWidth, mCells, &mMap);
-        mpSCM->solve(scm_max_steps);
-        mpSCM->generateImage("interactive_cscm", &mColoringMethod);
+        reset(SystemMicroChaosStatic);
     }
     std::shared_ptr<std::vector<QImage>> getResults() {
         return mpSCM->getResults();
@@ -32,11 +32,18 @@ public:
     std::shared_ptr<std::map<std::pair<size_t, size_t>, size_t>> getBlockMap() {
         return mBlockIdMap;
     }
-    void reset() {
+    void reset(SystemTypes type) {
         blockCenters.clear();
         mBlockIdMap = std::make_shared<std::map<std::pair<size_t, size_t>, size_t>>();
         blockCenters.push_back({mCenter[0], mCenter[1]});
         mBlockIdMap->operator[](std::make_pair(0,0)) = 0; // Initial zone is at (0,0)
+        switch (type) {
+            case SystemMicroChaosStatic:
+                break;
+            case SystemIkedaMap:
+                break;
+        }
+        //MicroChaosMapStatic mMap{0.007, 0.02, 0.07, 0.0};
         mpSCM = std::make_shared<BSCMQt<SCMCell<uint32_t>, uint32_t, vec2>>(blockCenters[0], mWidth, mCells, &mMap);
         mpSCM->solve(scm_max_steps);
         mpSCM->generateImage("interactive_cscm", &mColoringMethod);
@@ -69,18 +76,20 @@ public:
         return cTileH;
     }
 private:
-    int gridW{24}, gridH{24};
-    const uint32_t cTileW{200}; // TODO: Tile aspect ratio
-    const uint32_t cTileH{160};
+    int gridW{10}, gridH{10};
+    const uint32_t cTileW{500}; // TODO: Tile aspect ratio
+    const uint32_t cTileH{500};
     std::shared_ptr<BSCMQt<SCMCell<uint32_t>, uint32_t, vec2>> mpSCM;
     std::vector<vec2> blockCenters;
-    int scm_max_steps{20};
+    int scm_max_steps{1};
     //IkedaMap mMap{0.96};
     //vec2 mWidth{6.0, 6.0}; // State space tile width
     ///vec2 mCenter{-3*6.0, 3*6.0}; // State space center
-    MicroChaosMapStatic mMap{0.007, 0.02, 0.07, 0.0};
-    vec2 mWidth{24.0, 2.0}; // State space tile width
-    vec2 mCenter{-320, 5*2.0}; // State space center
+    //MicroChaosMapStatic mMap{0.007, 0.02, 0.07, 0.0};
+    LoziMap mMap;
+    cm::DynamicalSystemBase<vec2>* mpMap;
+    vec2 mWidth{9.0, 9.0}; // State space tile width
+    vec2 mCenter{-18, 18}; // State space center
     SCMHeatMapColoring<SCMCell<uint32_t>, uint32_t> mColoringMethod;
     std::vector<uint32_t> mCells = {cTileW, cTileH}; // State space tile cell counts
 

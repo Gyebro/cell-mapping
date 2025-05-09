@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "cscmb.h"
-#include "microchaos.h"
+#include "../systems/microchaos.h"
 
 using namespace cm;
 using namespace std;

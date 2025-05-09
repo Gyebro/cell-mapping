@@ -1,5 +1,6 @@
 #include "cmlib.h"
 #include "jerk_saturated_acc.h"
+
 #include "gnuplot_i.h"
 
 using namespace cm;
@@ -17,7 +18,7 @@ int main() {
     double j_max = 5;
     double j_min = -5;
     double k = 100;
-    Jerk_staruated_acc limitCycle(dT, t_fol, m, tau, v_avg, j_max, j_min, k);
+    Jerk_saturated_acc limitCycle(dT, t_fol, m, tau, v_avg, j_max, j_min, k);
 
     vec3 center = {v_avg*t_fol, v_avg, 0.0};
     vec3 width  = {30, 30, 30};

@@ -2,7 +2,7 @@
 #include <map>
 
 #include "cmlib.h"
-#include "microchaos.h"
+#include "../systems/microchaos.h"
 #include "vec3.h"
 
 using namespace cm;

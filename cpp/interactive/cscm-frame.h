@@ -18,6 +18,7 @@ class CSCMFrame : public QFrame {
   public:
     explicit CSCMFrame(QWidget* parent = 0, Qt::WindowFlags f = Qt::WindowFlags());
     void attachExecutor(std::shared_ptr<JobExecutor> pExecutor);
+    void reset();
     ~CSCMFrame();
 
 protected:

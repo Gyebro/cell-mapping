@@ -1,5 +1,5 @@
 #include "cmlib.h"
-#include "lorenz.h"
+#include "../systems/lorenz.h"
 #include "gnuplot_i.h"
 
 using namespace cm;
@@ -13,8 +13,8 @@ int main() {
 
     vec3 center = {0.0, 0.0, 0.0};
     vec3 width  = {220.0, 8.0, 6.0};
-    vector<uint32_t> cells = {600, 300, 600};//{1200, 600, 1200}; //
-    //cells = {300,150,300};
+    vector<uint32_t> cells = {300,150,300};//{1200, 600, 1200}; //
+    //cells = ;
 
     bool single_sim = false;
     bool interactive = true;

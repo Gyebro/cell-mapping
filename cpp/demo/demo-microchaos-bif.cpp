@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include "cmlib.h"
-#include "microchaos.h"
+#include "../systems/microchaos.h"
 
 
 using namespace cm;

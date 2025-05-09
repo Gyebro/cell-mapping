@@ -1,5 +1,5 @@
 #include "cmlib.h"
-#include "rolling.h"
+#include "../systems/rolling.h"
 #include "gnuplot_i.h"
 
 using namespace cm;

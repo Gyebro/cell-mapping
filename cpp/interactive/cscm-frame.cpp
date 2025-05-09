@@ -42,6 +42,11 @@ CSCMFrame::~CSCMFrame() {
   delete update_timer_;
 }
 
+
+void CSCMFrame::reset() {
+  mpExecutor->reset();
+}
+
 void CSCMFrame::clear() {
   update();
 }

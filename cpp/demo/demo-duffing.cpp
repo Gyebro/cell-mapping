@@ -1,5 +1,5 @@
 #include "cmlib.h"
-#include "duffing.h"
+#include "../systems/duffing.h"
 
 using namespace cm;
 using namespace std;

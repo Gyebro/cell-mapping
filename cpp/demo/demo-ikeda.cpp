@@ -1,5 +1,5 @@
 #include "cmlib.h"
-#include "ikeda.h"
+#include "../systems/ikeda.h"
 
 using namespace cm;
 using namespace std;

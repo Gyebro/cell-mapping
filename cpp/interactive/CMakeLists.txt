@@ -1,9 +1,6 @@
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
-# TODO: Do not copy system sources
 set(interactive_ui_SOURCES
-        ikeda.cpp
-        microchaos.cpp
         executor.cpp
         cscm-frame.cpp
         interactive-cscm.cpp
@@ -13,7 +10,7 @@ set(interactive_ui_HEADERS
 )
 qt5_wrap_cpp(interactive_MOCS ${interactive_ui_HEADERS})
 add_executable(interactive-cscm ${interactive_ui_SOURCES} ${interactive_MOCS})
-target_link_libraries(interactive-cscm Qt5::Widgets cm)
+target_link_libraries(interactive-cscm Qt5::Widgets systems cm)
 
 find_package(OpenMP)
 

@@ -1,5 +1,5 @@
 #include "cmlib.h"
-#include "pendulum.h"
+#include "../systems/pendulum.h"
 
 using namespace cm;
 using namespace std;

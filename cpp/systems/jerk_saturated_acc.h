@@ -3,9 +3,8 @@
 
 #include "system.h"
 #include "vec3.h"
-#include "rk45.h"
 
-class Jerk_staruated_acc : public cm::DynamicalSystemBase<vec3> {
+class Jerk_saturated_acc : public cm::DynamicalSystemBase<vec3> {
 private:
     double dT;
     double t_fol;
@@ -16,7 +15,7 @@ private:
     double j_min;
     double k;
 public:
-    Jerk_staruated_acc(double timestep, double t_fol, double m, double tau,
+    Jerk_saturated_acc(double timestep, double t_fol, double m, double tau,
                         double v_avg, double j_max, double j_min, double k):
                         dT(dT), t_fol(t_fol), m(m), tau(tau),
                         v_avg(v_avg), j_max(j_max), j_min(j_min), k(k) {

@@ -32,6 +32,15 @@ public:
     std::shared_ptr<std::map<std::pair<size_t, size_t>, size_t>> getBlockMap() {
         return mBlockIdMap;
     }
+    void reset() {
+        blockCenters.clear();
+        mBlockIdMap = std::make_shared<std::map<std::pair<size_t, size_t>, size_t>>();
+        blockCenters.push_back({mCenter[0], mCenter[1]});
+        mBlockIdMap->operator[](std::make_pair(0,0)) = 0; // Initial zone is at (0,0)
+        mpSCM = std::make_shared<BSCMQt<SCMCell<uint32_t>, uint32_t, vec2>>(blockCenters[0], mWidth, mCells, &mMap);
+        mpSCM->solve(scm_max_steps);
+        mpSCM->generateImage("interactive_cscm", &mColoringMethod);
+    }
     void update(size_t i, size_t j, bool run=true) {
         vec2 newCenter = {mCenter[0]+i*mWidth[0], mCenter[1]-j*mWidth[1]};
         if (std::find(blockCenters.begin(), blockCenters.end(), newCenter) == blockCenters.end()) {

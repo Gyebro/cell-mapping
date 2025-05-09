@@ -2,7 +2,7 @@
 #include <algorithm>
 
 #include "cmlib.h"
-#include "microchaos.h"
+#include "../systems/microchaos.h"
 #include "../gnuplot_i/gnuplot_i.h"
 
 using namespace cm;

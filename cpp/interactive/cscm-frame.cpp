@@ -6,6 +6,8 @@
 
 #include <QPointF>
 
+#include "executor.h"
+
 #define DEFAULT_BG_R 0xaa
 #define DEFAULT_BG_G 0xaa
 #define DEFAULT_BG_B 0xaa
@@ -14,7 +16,7 @@ CSCMFrame::CSCMFrame(QWidget* parent, Qt::WindowFlags f)
   : QFrame(parent, f)
   , frame_count_(0)
   , id_counter_(0) {
-  setFixedSize(1280, 1024);
+
   setWindowTitle("CSCM explorer");
   originX = 0; originY = 0;
   moveX = 0; moveY = 0;
@@ -42,8 +44,8 @@ CSCMFrame::~CSCMFrame() {
   delete update_timer_;
 }
 
-void CSCMFrame::reset() {
-  mpExecutor->reset(JobExecutor::SystemMicroChaosStatic);
+void CSCMFrame::reset(JobExecutor::SystemTypes type) {
+  mpExecutor->reset(type);
 }
 
 void CSCMFrame::clear() {
@@ -62,8 +64,10 @@ void CSCMFrame::mousePressEvent(QMouseEvent* event) {
     startY = event->y();
   } else if (event->button() == Qt::RightButton) {
     // Map click coordinate to grid tile index
-    int i = (event->x() - originX) / cW;
-    int j = (event->y() - originY) / cH;
+    float targetW = zoom*static_cast<float>(mpExecutor->cW());
+    float targetH = zoom*static_cast<float>(mpExecutor->cH());
+    int i = (event->x() - originX) / targetW;
+    int j = (event->y() - originY) / targetH;
     if (i >= 0 && i < gW && j >= 0 && j < gH) {
       std::cout << "Requesting update on tile (i,j) = (" << i << "," << j << ")" << std::endl;
       mpExecutor->update(i, j);
@@ -91,6 +95,18 @@ void CSCMFrame::mouseReleaseEvent(QMouseEvent* event) {
   }
 }
 
+void CSCMFrame::wheelEvent(QWheelEvent *event) {
+  QFrame::wheelEvent(event);
+  if(event->angleDelta().y() > 0) {
+    zoom += 0.02f;
+    if (zoom > 5.0f) zoom = 5.0f;
+  }
+  else if(event->angleDelta().y() < 0) {
+    zoom -= 0.02f;
+    if (zoom < 0.1f) zoom = 0.1f;
+  }
+}
+
 void CSCMFrame::keyReleaseEvent(QKeyEvent* event) {
   QWidget::keyReleaseEvent(event);
   switch (event->key()) {
@@ -110,18 +126,20 @@ void CSCMFrame::paintEvent(QPaintEvent*) {
   for (size_t i=0; i<gW; i++) {
     for (size_t j=0; j<gH; j++) {
       auto loc = std::make_pair(i,j);
+      float targetW = zoom*static_cast<float>(mpExecutor->cW());
+      float targetH = zoom*static_cast<float>(mpExecutor->cH());
       if (blockMap->contains(loc)) {
         if (results->size() > blockMap->at(loc)) {
-          painter.drawImage(originX+moveX+i*cW, originY+moveY+j*cH, results->at(blockMap->at(loc)));
+          painter.drawImage(QRectF(originX+moveX+i*targetW, originY+moveY+j*targetH, targetW, targetH), results->at(blockMap->at(loc)));
         } else {
           std::cout << "Result not available yet...\n";
         }
       } else {
         //size_t index = i*gH + j;
         QPainterPath path;
-        path.addRect(originX+moveX+i*cW, originY+moveY+j*cH, cW, cH);
+        path.addRect(originX+moveX+i*targetW, originY+moveY+j*targetH, targetW, targetH);
         painter.setPen(pen);
-        painter.fillRect(originX+moveX+i*cW, originY+moveY+j*cH, cW, cH, Qt::black);
+        painter.fillRect(originX+moveX+i*targetW, originY+moveY+j*targetH, targetW, targetH, Qt::black);
         painter.drawPath(path);
       }
     }

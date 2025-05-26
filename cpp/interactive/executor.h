@@ -21,9 +21,11 @@ class JobExecutor {
 public:
     enum SystemTypes {
         SystemMicroChaosStatic,
-        SystemIkedaMap
+        SystemIkedaMap,
+        SystemLoziMap
     };
     JobExecutor() {
+        mpMap = nullptr;
         reset(SystemMicroChaosStatic);
     }
     std::shared_ptr<std::vector<QImage>> getResults() {
@@ -37,14 +39,21 @@ public:
         mBlockIdMap = std::make_shared<std::map<std::pair<size_t, size_t>, size_t>>();
         blockCenters.push_back({mCenter[0], mCenter[1]});
         mBlockIdMap->operator[](std::make_pair(0,0)) = 0; // Initial zone is at (0,0)
+        if (mpMap != nullptr) {
+            delete mpMap;
+        }
         switch (type) {
             case SystemMicroChaosStatic:
+                mpMap = new MicroChaosMapStatic(0.007, 0.02, 0.07, 0.0);
                 break;
             case SystemIkedaMap:
+                mpMap = new IkedaMap(0.96);
+                break;
+            case SystemLoziMap:
+                mpMap = new LoziMap();
                 break;
         }
-        //MicroChaosMapStatic mMap{0.007, 0.02, 0.07, 0.0};
-        mpSCM = std::make_shared<BSCMQt<SCMCell<uint32_t>, uint32_t, vec2>>(blockCenters[0], mWidth, mCells, &mMap);
+        mpSCM = std::make_shared<BSCMQt<SCMCell<uint32_t>, uint32_t, vec2>>(blockCenters[0], mWidth, mCells, mpMap);
         mpSCM->solve(scm_max_steps);
         mpSCM->generateImage("interactive_cscm", &mColoringMethod);
     }
@@ -76,23 +85,17 @@ public:
         return cTileH;
     }
 private:
-    int gridW{10}, gridH{10};
-    const uint32_t cTileW{500}; // TODO: Tile aspect ratio
-    const uint32_t cTileH{500};
+    int gridW{10}, gridH{10}; // TODO: remove this grid and simply map the view coordinate system to cell-mapping CS.
+    const uint32_t cTileW{200}; // TODO: Tile aspect ratio
+    const uint32_t cTileH{200};
     std::shared_ptr<BSCMQt<SCMCell<uint32_t>, uint32_t, vec2>> mpSCM;
     std::vector<vec2> blockCenters;
     int scm_max_steps{1};
-    //IkedaMap mMap{0.96};
-    //vec2 mWidth{6.0, 6.0}; // State space tile width
-    ///vec2 mCenter{-3*6.0, 3*6.0}; // State space center
-    //MicroChaosMapStatic mMap{0.007, 0.02, 0.07, 0.0};
-    LoziMap mMap;
     cm::DynamicalSystemBase<vec2>* mpMap;
     vec2 mWidth{9.0, 9.0}; // State space tile width
     vec2 mCenter{-18, 18}; // State space center
     SCMHeatMapColoring<SCMCell<uint32_t>, uint32_t> mColoringMethod;
     std::vector<uint32_t> mCells = {cTileW, cTileH}; // State space tile cell counts
-
     std::shared_ptr<std::map<std::pair<size_t, size_t>, size_t>> mBlockIdMap;
 };
 

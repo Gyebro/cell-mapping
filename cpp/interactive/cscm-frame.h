@@ -18,7 +18,7 @@ class CSCMFrame : public QFrame {
   public:
     explicit CSCMFrame(QWidget* parent = 0, Qt::WindowFlags f = Qt::WindowFlags());
     void attachExecutor(std::shared_ptr<JobExecutor> pExecutor);
-    void reset();
+    void reset(JobExecutor::SystemTypes type);
     ~CSCMFrame();
 
 protected:
@@ -26,6 +26,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
+    void wheelEvent(QWheelEvent *event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
     void updateInternals();
 
@@ -42,6 +43,7 @@ private:
     int moveX, moveY;
     bool dragging;
     int gW, gH, cW, cH;
+    float zoom = 1.0f;
 
     uint64_t frame_count_;
     uint32_t id_counter_;

@@ -26,6 +26,7 @@ public:
     };
     JobExecutor() {
         mpMap = nullptr;
+        mSystemParameters = {0.007, 0.02, 0.07, 0.0};
         reset(SystemMicroChaosStatic);
     }
     std::shared_ptr<std::vector<QImage>> getResults() {
@@ -33,6 +34,14 @@ public:
     }
     std::shared_ptr<std::map<std::pair<size_t, size_t>, size_t>> getBlockMap() {
         return mBlockIdMap;
+    }
+    void setParameters(const std::vector<double>& params) {
+        cTileW = static_cast<uint32_t>(params[0]);
+        cTileH = static_cast<uint32_t>(params[1]);
+        mWidth = vec2{static_cast<double>(params[2]), static_cast<double>(params[3])};
+        mCenter = vec2{static_cast<double>(params[4]), static_cast<double>(params[5])};
+        mSystemParameters.resize(4);
+        std::copy(params.begin()+6, params.end(), mSystemParameters.begin());
     }
     void reset(SystemTypes type) {
         blockCenters.clear();
@@ -42,9 +51,10 @@ public:
         if (mpMap != nullptr) {
             delete mpMap;
         }
+        // TODO: Forward mSystemParameters to system constructors
         switch (type) {
             case SystemMicroChaosStatic:
-                mpMap = new MicroChaosMapStatic(0.007, 0.02, 0.07, 0.0);
+                mpMap = new MicroChaosMapStatic(mSystemParameters[0], mSystemParameters[1], mSystemParameters[2], mSystemParameters[3]);
                 break;
             case SystemIkedaMap:
                 mpMap = new IkedaMap(0.96);
@@ -86,14 +96,15 @@ public:
     }
 private:
     int gridW{10}, gridH{10}; // TODO: remove this grid and simply map the view coordinate system to cell-mapping CS.
-    const uint32_t cTileW{200}; // TODO: Tile aspect ratio
-    const uint32_t cTileH{200};
+    uint32_t cTileW{200}; // TODO: Tile aspect ratio
+    uint32_t cTileH{200};
     std::shared_ptr<BSCMQt<SCMCell<uint32_t>, uint32_t, vec2>> mpSCM;
     std::vector<vec2> blockCenters;
     int scm_max_steps{1};
     cm::DynamicalSystemBase<vec2>* mpMap;
     vec2 mWidth{9.0, 9.0}; // State space tile width
     vec2 mCenter{-18, 18}; // State space center
+    std::vector<double> mSystemParameters;
     SCMHeatMapColoring<SCMCell<uint32_t>, uint32_t> mColoringMethod;
     std::vector<uint32_t> mCells = {cTileW, cTileH}; // State space tile cell counts
     std::shared_ptr<std::map<std::pair<size_t, size_t>, size_t>> mBlockIdMap;

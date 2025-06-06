@@ -48,6 +48,10 @@ void CSCMFrame::reset(JobExecutor::SystemTypes type) {
   mpExecutor->reset(type);
 }
 
+void CSCMFrame::setParameters(const std::vector<double>& parameters) {
+  mpExecutor->setParameters(parameters);
+}
+
 void CSCMFrame::clear() {
   update();
 }

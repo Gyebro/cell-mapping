@@ -32,7 +32,7 @@ public:
     std::shared_ptr<std::vector<QImage>> getResults() {
         return mpSCM->getResults();
     }
-    std::shared_ptr<std::map<std::pair<size_t, size_t>, size_t>> getBlockMap() {
+    std::shared_ptr<std::map<std::pair<int32_t, int32_t>, size_t>> getBlockMap() {
         return mBlockIdMap;
     }
     void setParameters(const std::vector<double>& params) {
@@ -45,7 +45,7 @@ public:
     }
     void reset(SystemTypes type) {
         blockCenters.clear();
-        mBlockIdMap = std::make_shared<std::map<std::pair<size_t, size_t>, size_t>>();
+        mBlockIdMap = std::make_shared<std::map<std::pair<int32_t, int32_t>, size_t>>();
         blockCenters.push_back({mCenter[0], mCenter[1]});
         mBlockIdMap->operator[](std::make_pair(0,0)) = 0; // Initial zone is at (0,0)
         if (mpMap != nullptr) {
@@ -67,7 +67,7 @@ public:
         mpSCM->solve(scm_max_steps);
         mpSCM->generateImage("interactive_cscm", &mColoringMethod);
     }
-    void update(size_t i, size_t j, bool run=true) {
+    void update(int32_t i, int32_t j, bool run=true) {
         vec2 newCenter = {mCenter[0]+i*mWidth[0], mCenter[1]-j*mWidth[1]};
         if (std::find(blockCenters.begin(), blockCenters.end(), newCenter) == blockCenters.end()) {
             blockCenters.push_back(newCenter);
@@ -82,12 +82,6 @@ public:
         mpSCM->update(scm_max_steps);
         mpSCM->generateImage("interactive_cscm", &mColoringMethod);
     }
-    [[nodiscard]] int gW() const {
-        return gridW;
-    }
-    [[nodiscard]] int gH() const {
-        return gridH;
-    }
     [[nodiscard]] int cW() const {
         return cTileW;
     }
@@ -95,11 +89,11 @@ public:
         return cTileH;
     }
 private:
-    int gridW{10}, gridH{10}; // TODO: remove this grid and simply map the view coordinate system to cell-mapping CS.
     uint32_t cTileW{200}; // TODO: Tile aspect ratio
     uint32_t cTileH{200};
     std::shared_ptr<BSCMQt<SCMCell<uint32_t>, uint32_t, vec2>> mpSCM;
     std::vector<vec2> blockCenters;
+    std::shared_ptr<std::map<std::pair<int32_t, int32_t>, size_t>> mBlockIdMap;
     int scm_max_steps{1};
     cm::DynamicalSystemBase<vec2>* mpMap;
     vec2 mWidth{9.0, 9.0}; // State space tile width
@@ -107,7 +101,7 @@ private:
     std::vector<double> mSystemParameters;
     SCMHeatMapColoring<SCMCell<uint32_t>, uint32_t> mColoringMethod;
     std::vector<uint32_t> mCells = {cTileW, cTileH}; // State space tile cell counts
-    std::shared_ptr<std::map<std::pair<size_t, size_t>, size_t>> mBlockIdMap;
+
 };
 
 #endif //CSCM_EXECUTOR_H

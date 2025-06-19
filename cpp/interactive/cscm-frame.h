@@ -43,7 +43,7 @@ private:
     int startX, startY;
     int moveX, moveY;
     bool dragging;
-    int gW, gH, cW, cH;
+    int cW, cH;
     float zoom = 1.0f;
 
     uint64_t frame_count_;

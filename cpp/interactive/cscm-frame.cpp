@@ -34,8 +34,7 @@ CSCMFrame::CSCMFrame(QWidget* parent, Qt::WindowFlags f)
 
 void CSCMFrame::attachExecutor(std::shared_ptr<JobExecutor> pExecutor) {
   mpExecutor = pExecutor;
-  gW = mpExecutor->gW();
-  gH = mpExecutor->gH();
+  // Get cluster dimensions
   cW = mpExecutor->cW();
   cH = mpExecutor->cH();
 }
@@ -70,14 +69,12 @@ void CSCMFrame::mousePressEvent(QMouseEvent* event) {
     // Map click coordinate to grid tile index
     float targetW = zoom*static_cast<float>(mpExecutor->cW());
     float targetH = zoom*static_cast<float>(mpExecutor->cH());
-    int i = (event->x() - originX) / targetW;
-    int j = (event->y() - originY) / targetH;
-    if (i >= 0 && i < gW && j >= 0 && j < gH) {
-      std::cout << "Requesting update on tile (i,j) = (" << i << "," << j << ")" << std::endl;
-      mpExecutor->update(i, j);
-    } else {
-      std::cout << "Out of bounds" << std::endl;
-    }
+    float i_ = static_cast<float>(event->x() - originX) / targetW;
+    float j_ = static_cast<float>(event->y() - originY) / targetH;
+    int32_t i = static_cast<int32_t>(floor(i_));
+    int32_t j = static_cast<int32_t>(floor(j_));
+    std::cout << "Requesting update on tile (i,j) = (" << i << "," << j << ")" << std::endl;
+    mpExecutor->update(i, j);
   }
 }
 
@@ -126,28 +123,37 @@ void CSCMFrame::paintEvent(QPaintEvent*) {
   painter.fillRect(0, 0, width(), height(), background_color);
   std::shared_ptr<std::vector<QImage>> results = mpExecutor->getResults();
   auto blockMap = mpExecutor->getBlockMap();
-  QPen pen(Qt::white, 1);
-  for (size_t i=0; i<gW; i++) {
-    for (size_t j=0; j<gH; j++) {
-      auto loc = std::make_pair(i,j);
-      float targetW = zoom*static_cast<float>(mpExecutor->cW());
-      float targetH = zoom*static_cast<float>(mpExecutor->cH());
-      if (blockMap->contains(loc)) {
-        if (results->size() > blockMap->at(loc)) {
-          painter.drawImage(QRectF(originX+moveX+i*targetW, originY+moveY+j*targetH, targetW, targetH), results->at(blockMap->at(loc)));
-        } else {
-          std::cout << "Result not available yet...\n";
-        }
-      } else {
+  QPen penW(Qt::white, 1);
+  QPen penX(Qt::red, 2);
+  QPen penY(Qt::green, 2);
+
+  int axisSizePixels = 100;
+  float targetW = zoom*static_cast<float>(mpExecutor->cW());
+  float targetH = zoom*static_cast<float>(mpExecutor->cH());
+  // Paint cluster textures (as images)
+  for(auto it = blockMap->begin(); it != blockMap->end(); ++it) {
+    auto loc = it->first;
+    int i = loc.first;
+    int j = loc.second;
+    if (results->size() > blockMap->at(loc)) {
+      painter.drawImage(QRectF(originX+moveX+i*targetW, originY+moveY+j*targetH, targetW, targetH), results->at(blockMap->at(loc)));
+    } else {
+      std::cout << "Result not available yet...\n";
+    }
+  }
+      /*else {
         //size_t index = i*gH + j;
         QPainterPath path;
         path.addRect(originX+moveX+i*targetW, originY+moveY+j*targetH, targetW, targetH);
-        painter.setPen(pen);
+        painter.setPen(penW);
         painter.fillRect(originX+moveX+i*targetW, originY+moveY+j*targetH, targetW, targetH, Qt::black);
         painter.drawPath(path);
-      }
-    }
-  }
+      }*/
+  // Paint display CS indicator
+  painter.setPen(penX);
+  painter.drawLine(originX+moveX, originY+moveY, originX+moveX + zoom*axisSizePixels, originY+moveY);
+  painter.setPen(penY);
+  painter.drawLine(originX+moveX, originY+moveY, originX+moveX, originY+moveY + zoom*axisSizePixels);
 
 }
 

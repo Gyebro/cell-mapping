@@ -88,8 +88,20 @@ public:
     [[nodiscard]] int cH() const {
         return cTileH;
     }
+    [[nodiscard]] double tW() const {
+        return mWidth[0];
+    }
+    [[nodiscard]] double tH() const {
+        return mWidth[1];
+    }
+    [[nodiscard]] double getCenterX() const {
+        return mCenter[0];
+    }
+    [[nodiscard]] double getCenterY() const {
+        return mCenter[1];
+    }
 private:
-    uint32_t cTileW{200}; // TODO: Tile aspect ratio
+    uint32_t cTileW{200};
     uint32_t cTileH{200};
     std::shared_ptr<BSCMQt<SCMCell<uint32_t>, uint32_t, vec2>> mpSCM;
     std::vector<vec2> blockCenters;

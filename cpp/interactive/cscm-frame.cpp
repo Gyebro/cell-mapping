@@ -8,10 +8,6 @@
 
 #include "executor.h"
 
-#define DEFAULT_BG_R 0xaa
-#define DEFAULT_BG_G 0xaa
-#define DEFAULT_BG_B 0xaa
-
 CSCMFrame::CSCMFrame(QWidget* parent, Qt::WindowFlags f)
   : QFrame(parent, f)
   , frame_count_(0)
@@ -119,42 +115,72 @@ void CSCMFrame::keyReleaseEvent(QKeyEvent* event) {
 
 void CSCMFrame::paintEvent(QPaintEvent*) {
   QPainter painter(this);
-  QRgb background_color = qRgb(DEFAULT_BG_R, DEFAULT_BG_G, DEFAULT_BG_B);
+  QRgb background_color = qRgb(0xaa, 0xaa, 0xaa);
   painter.fillRect(0, 0, width(), height(), background_color);
   std::shared_ptr<std::vector<QImage>> results = mpExecutor->getResults();
   auto blockMap = mpExecutor->getBlockMap();
   QPen penW(Qt::white, 1);
   QPen penX(Qt::red, 2);
   QPen penY(Qt::green, 2);
+  int displayX = originX+moveX;
+  int displayY = originY+moveY;
 
   int axisSizePixels = 100;
   float targetW = zoom*static_cast<float>(mpExecutor->cW());
   float targetH = zoom*static_cast<float>(mpExecutor->cH());
+  float pixelsToStateX = mpExecutor->tW()/(zoom*static_cast<float>(mpExecutor->cW()));
+  float pixelsToStateY = mpExecutor->tH()/(zoom*static_cast<float>(mpExecutor->cH()));
   // Paint cluster textures (as images)
   for(auto it = blockMap->begin(); it != blockMap->end(); ++it) {
     auto loc = it->first;
     int i = loc.first;
     int j = loc.second;
     if (results->size() > blockMap->at(loc)) {
-      painter.drawImage(QRectF(originX+moveX+i*targetW, originY+moveY+j*targetH, targetW, targetH), results->at(blockMap->at(loc)));
+      painter.drawImage(QRectF(displayX+i*targetW, displayY+j*targetH, targetW, targetH), results->at(blockMap->at(loc)));
     } else {
       std::cout << "Result not available yet...\n";
     }
   }
-      /*else {
-        //size_t index = i*gH + j;
-        QPainterPath path;
-        path.addRect(originX+moveX+i*targetW, originY+moveY+j*targetH, targetW, targetH);
-        painter.setPen(penW);
-        painter.fillRect(originX+moveX+i*targetW, originY+moveY+j*targetH, targetW, targetH, Qt::black);
-        painter.drawPath(path);
-      }*/
   // Paint display CS indicator
   painter.setPen(penX);
-  painter.drawLine(originX+moveX, originY+moveY, originX+moveX + zoom*axisSizePixels, originY+moveY);
+  painter.setFont(QFont("Arial", 16));
+  painter.drawLine(displayX, displayY, displayX + zoom*axisSizePixels, displayY);
   painter.setPen(penY);
-  painter.drawLine(originX+moveX, originY+moveY, originX+moveX, originY+moveY + zoom*axisSizePixels);
-
+  painter.drawLine(displayX, displayY, displayX, displayY + zoom*axisSizePixels);
+  painter.setPen(penW);
+  painter.drawText(displayX, displayY+16, QString("Display CS"));
+  // Paint state space CS indicator
+  painter.setPen(penX);
+  float dispToStateX = -mpExecutor->getCenterX()/pixelsToStateX;
+  float dispToStateY = +mpExecutor->getCenterY()/pixelsToStateY; // Sign flip because display coordinate system points down
+  painter.drawLine(displayX+dispToStateX, displayY+dispToStateY,
+    displayX+dispToStateX + zoom*axisSizePixels, displayY+dispToStateY);
+  painter.setPen(penY);
+  painter.drawLine(displayX+dispToStateX, displayY+dispToStateY,
+    displayX+dispToStateX, displayY+dispToStateY - zoom*axisSizePixels);
+  // Paint text labels
+  painter.setPen(penW);
+  painter.drawText(displayX+dispToStateX, displayY+dispToStateY, QString("State-space CS"));
+  // Paint X coordinates along the bottom
+  int wH = height();
+  int wW = width();
+  painter.setFont(QFont("Arial", 12));
+  painter.drawLine(0, wH-10, wW, wH-10);
+  for (int pX = 0; pX < wW; pX+=100) {
+    painter.drawLine(pX, wH-5, pX, wH-15);
+    float sX = pX-displayX-dispToStateX;
+    sX*=pixelsToStateX;
+    QString str("%1");
+    painter.drawText(pX, wH-20, str.arg(sX,0,'f',2));
+  }
+  painter.drawLine(10, 0, 10, wH);
+  for (int pY = 0; pY < wH; pY+=100) {
+    painter.drawLine(5, pY, 15, pY);
+    float sY = pY-displayY-dispToStateY;
+    sY*=-pixelsToStateY;
+    QString str("%1");
+    painter.drawText(20, pY, str.arg(sY,0,'f',2));
+  }
 }
 
 void CSCMFrame::updateInternals() {

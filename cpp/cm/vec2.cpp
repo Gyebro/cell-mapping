@@ -63,6 +63,18 @@ vec2 operator-(const vec2& l, const vec2& r) {
     return vec2({l[0]-r[0], l[1]-r[1]});
 }
 
+vec2 operator/(const vec2& v, const double d) {
+    return vec2({v[0]/d, v[1]/d});
+}
+
+vec2 operator/(const vec2& l, const vec2& r) {
+    return vec2({l[0]/r[0], l[1]/r[1]});
+}
+
 double norm(const vec2 &v) {
     return sqrt(v[0]*v[0]+v[1]*v[1]);
+}
+
+double prod(const vec2& v) {
+    return v[0]*v[1];
 }

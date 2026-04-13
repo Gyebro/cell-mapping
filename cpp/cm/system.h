@@ -7,6 +7,8 @@ namespace cm {
     class DynamicalSystemBase {
     private:
     public:
+        virtual ~DynamicalSystemBase() = default;
+
         virtual StateVectorType step(const StateVectorType& state) const = 0;
     };
 }

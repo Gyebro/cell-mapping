@@ -339,7 +339,9 @@ namespace cm {
                     }
                 } // end for sinkDoA
                 invalidatedCount = invalidatedCells.size();
-                std::cout << "Invalidating " << invalidatedCount << " cells (~" << (100*invalidatedCount/sinkDoA.size()) << "%)" << std::endl;
+                if (sinkDoA.size() > 0) {
+                    std::cout << "Invalidating " << invalidatedCount << " cells (~" << (100*invalidatedCount/sinkDoA.size()) << "%)" << std::endl;
+                }
                 for (IDType& i : invalidatedCells) {
                     css.getCell(i).setState(CellState::Untouched);
                 }

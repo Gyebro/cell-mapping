@@ -2,6 +2,7 @@
 #define CELL_MAPPING_CPP_CELL_H
 
 #include <cstdint>
+#include <vector>
 
 namespace cm {
 
@@ -92,7 +93,29 @@ namespace cm {
          void setStep(IDType step) {
              SCMCell::step = step;
          }
-     };
+    };
+
+    template <class IDType, class StateVectorType>
+    class ICMCell : public SCMCell<IDType> {
+    private:
+        StateVectorType imageState; // Top-left corners
+        std::vector<IDType> otherCorners; // Cell IDs referencing other corners
+    public:
+        ICMCell() : SCMCell<IDType>() {}
+        StateVectorType getImageState() const {
+            return imageState;
+        }
+        void setImageState(const StateVectorType& image) {
+            imageState = image;
+        }
+        void setOtherCorners(const std::vector<IDType>& cornerIDs) {
+            otherCorners = cornerIDs;
+        }
+        const std::vector<IDType>& getOtherCorners() const {
+            return otherCorners;
+        }
+
+    };
 
     template <class IDType>
     class ClusterableSCMCell : public SCMCell<IDType> {

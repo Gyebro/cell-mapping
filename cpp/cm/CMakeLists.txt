@@ -12,6 +12,7 @@ add_library(cm
 		cmlib.h
 		css.cpp css.h
 		cell.cpp cell.h
+		icm.h
 		scm.cpp scm.h
 		scmb.cpp scmb.h
 		system.cpp system.h

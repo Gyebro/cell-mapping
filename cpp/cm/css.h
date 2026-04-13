@@ -4,6 +4,7 @@
 #include "cell.h"
 #include <vector>
 #include <cmath>
+#include <oneapi/tbb/info.h>
 
 namespace cm {
 
@@ -71,12 +72,6 @@ namespace cm {
                 cellWidth[i] = width[i] / cellCounts[i];
             }
         }
-        /*const StateVectorType& getWidth() const {
-            return width;
-        }
-        const StateVectorType& getCenter() const {
-            return center;
-        }*/
         IDType getIDFromCellCoord(std::vector<IDType> cellCoord) const {
             IDType id = 1;
             for (IDType i=0; i<dimension; i++) {
@@ -147,6 +142,9 @@ namespace cm {
         }
         const std::vector<IDType> &getCellCounts() const {
             return cellCounts;
+        }
+        const StateVectorType& getCellWidth() const {
+            return cellWidth;
         }
     };
 
@@ -323,6 +321,82 @@ namespace cm {
         }
         void setStep(const IDType ID, const IDType step) {
             this->cells[ID].setStep(step);
+        }
+    };
+
+    template <class CellType, class IDType, class StateVectorType>
+    class ICMUniformCellStateSpace : public SCMUniformCellStateSpace<CellType, IDType, StateVectorType> {
+    private:
+        StateVectorType halfCellWidth;
+    public:
+        ICMUniformCellStateSpace(StateVectorType center, StateVectorType width, const std::vector<IDType>& cellCounts) :
+            SCMUniformCellStateSpace<CellType, IDType, StateVectorType>(center, width, cellCounts) {
+            halfCellWidth = 0.5 * this->getCellWidth();
+        }
+        const StateVectorType getImageState(const IDType ID) const {
+            return this->cells[ID].getImageState();
+        }
+        void setImageState(const IDType ID, const StateVectorType image) {
+            this->cells[ID].setImageState(image);
+        }
+        std::vector<IDType> getPositiveNeighbours(const IDType ID) {
+            std::vector<StateVectorType> posCorners;
+            std::vector<IDType> cornerIDs;
+            cornerIDs.reserve(this->dimension*(this->dimension+1)/2);
+            auto center = this->getCenter(ID);
+            StateVectorType zeros;
+            for (IDType d = 0; d < this->dimension; d++) {
+                StateVectorType corner;
+                corner[d] = this->getCellWidth()[d];
+                posCorners.push_back(center+corner);
+                for (IDType d2 = d+1; d2 < this->dimension; d2++) {
+                    corner[d2] = this->getCellWidth()[d2];
+                    posCorners.push_back(center+corner);
+                }
+            }
+            for (auto corner : posCorners) {
+                cornerIDs.push_back(this->getID(corner));
+            }
+            return cornerIDs;
+        }
+        bool interpolate(const StateVectorType& state, StateVectorType& out) {
+            auto ID = this->getID(state);
+            if (ID == 0) {
+                return false;
+            }
+            // Subtract the top-left corner coord of the cell from the state vector
+            StateVectorType ksi = state - (this->getCenter(ID) - halfCellWidth);
+            // Divide with widths to get relative ksi values (w.r.t top-left corner)
+            ksi = ksi / this->getCellWidth();
+            // Build corner weights
+            std::vector<StateVectorType> weights;
+            weights.reserve(this->dimension*(this->dimension+1)/2+1);
+            StateVectorType corner({1.0-ksi[0], 1.0-ksi[1]});
+            weights.push_back(corner);
+            for (IDType d = 0; d < this->dimension; d++) {
+                corner = StateVectorType({1.0-ksi[0], 1.0-ksi[1]});
+                corner[d] = ksi[d];
+                weights.push_back(corner);
+                for (IDType d2 = d+1; d2 < this->dimension; d2++) {
+                    corner[d2] = ksi[d2];
+                    weights.push_back(corner);
+                }
+            }
+            // Get system-images at corners
+            std::vector<StateVectorType> cornerImages;
+            cornerImages.reserve(weights.size());
+            cornerImages.push_back(this->getImageState(ID));
+            for (auto &c : this->getCell(ID).getOtherCorners()) {
+                if (c == 0) return false; // We're at the edge of the state space
+                cornerImages.push_back(this->getImageState(c));
+            }
+            // Interpolate
+            StateVectorType result;
+            for (IDType i = 0; i < weights.size(); i++) {
+                result = result + prod(weights[i])*cornerImages[i];
+            }
+            out = result;
+            return true;
         }
     };
 

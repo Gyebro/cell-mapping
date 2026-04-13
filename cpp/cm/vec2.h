@@ -115,10 +115,33 @@ vec2 operator+(const vec2& l, const vec2& r);
 vec2 operator-(const vec2& l, const vec2& r);
 
 /**
+ * Scalar division
+ * @param v
+ * @param d
+ * @return v/d
+ */
+vec2 operator/(const vec2& v, const double d);
+
+/**
+ * Elementwise division of two vectors
+ * @param l
+ * @param r
+ * @return {l[0]/r[0], l[1]/r[1]}
+ */
+vec2 operator/(const vec2& l, const vec2& r);
+
+/**
  * Vector L2 norm
  * @param v
  * @return square root of the sum of vector components' squares.
  */
 double norm(const vec2& v);
+
+/**
+ * Product of vector
+ * @param v
+ * @return v[0]*v[1]
+ */
+double prod(const vec2& v);
 
 #endif //CELL_MAPPING_CPP_VEC2_H

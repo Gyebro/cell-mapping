@@ -8,5 +8,6 @@
 #include "scm.h"
 #include "scmb.h"
 #include "cscm.h"
+#include "icm.h"
 
 #endif

@@ -105,6 +105,7 @@ private:
         systemMenu->addAction(tr("Micro-chaos map (negative stiffness)"), this, &CSCMExplorerWindow::useSystem1);
         systemMenu->addAction(tr("Ikeda-map"), this, &CSCMExplorerWindow::useSystem2);
         systemMenu->addAction(tr("Lozi-map"), this, &CSCMExplorerWindow::useSystem3);
+        systemMenu->addAction(tr("SGMS-Stribeck"), this, &CSCMExplorerWindow::useSystem4);
     }
     void reset() {
         std::cout << "Resetting CSCM executor...";
@@ -128,6 +129,10 @@ private:
     }
     void useSystem3() {
         type = JobExecutor::SystemLoziMap;
+        this->reset();
+    }
+    void useSystem4() {
+        type = JobExecutor::SystemSGMS;
         this->reset();
     }
 };

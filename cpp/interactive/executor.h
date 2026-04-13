@@ -12,6 +12,7 @@
 #include "ikeda.h"
 #include "lozi.h"
 #include "microchaos.h"
+#include "sgms_stribeck.h"
 
 using namespace cm;
 
@@ -22,7 +23,8 @@ public:
     enum SystemTypes {
         SystemMicroChaosStatic,
         SystemIkedaMap,
-        SystemLoziMap
+        SystemLoziMap,
+        SystemSGMS
     };
     JobExecutor() {
         mpMap = nullptr;
@@ -61,6 +63,9 @@ public:
                 break;
             case SystemLoziMap:
                 mpMap = new LoziMap();
+                break;
+            case SystemSGMS:
+                mpMap = new SGMSStribeckModel();
                 break;
         }
         mpSCM = std::make_shared<BSCMQt<SCMCell<uint32_t>, uint32_t, vec2>>(blockCenters[0], mWidth, mCells, mpMap);

@@ -339,6 +339,12 @@ namespace cm {
         void setImageState(const IDType ID, const StateVectorType image) {
             this->cells[ID].setImageState(image);
         }
+        const std::vector<std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>>& getNodes(const IDType ID) const {
+            return this->cells[ID].getSequenceIds();
+        }
+        void addNode(const IDType ID, const std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>& node) {
+            this->cells[ID].addNode(node);
+        }
         std::vector<IDType> getPositiveNeighbours(const IDType ID) {
             std::vector<StateVectorType> posCorners;
             std::vector<IDType> cornerIDs;
@@ -358,6 +364,21 @@ namespace cm {
                 cornerIDs.push_back(this->getID(corner));
             }
             return cornerIDs;
+        }
+        double getClosestMatch(const StateVectorType& state, const IDType& ignoreSequenceId, std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>& out) {
+            // Simplest approach: loop through the recorded sequences amongst the neighborhood
+            auto ID = this->getID(state);
+            auto nodes = this->getNodes(ID);
+            double minNorm = 100.0*norm(this->getCellWidth());
+            for (auto node : nodes) {
+                if (node->sequence == ignoreSequenceId) continue;
+                double dist = norm(state-node->state);
+                if (dist < minNorm) {
+                    minNorm = dist;
+                    out = node;
+                }
+            }
+            return minNorm;
         }
         bool interpolate(const StateVectorType& state, StateVectorType& out) {
             auto ID = this->getID(state);

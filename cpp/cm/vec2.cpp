@@ -78,3 +78,7 @@ double norm(const vec2 &v) {
 double prod(const vec2& v) {
     return v[0]*v[1];
 }
+
+double min(const vec2& v) {
+    return std::min(v[0], v[1]);
+}

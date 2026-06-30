@@ -144,4 +144,11 @@ double norm(const vec2& v);
  */
 double prod(const vec2& v);
 
+/**
+ * Min
+ * @param v
+ * @return min(v[0], v[1])
+ */
+double min(const vec2& v);
+
 #endif //CELL_MAPPING_CPP_VEC2_H

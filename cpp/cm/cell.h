@@ -2,9 +2,20 @@
 #define CELL_MAPPING_CPP_CELL_H
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace cm {
+
+    template <class IDType, class StateVectorType>
+        struct IcmGraphNode {
+        std::shared_ptr<IcmGraphNode> image;
+        std::shared_ptr<IcmGraphNode> parent;
+        IDType group;
+        IDType step;
+        IDType sequence;
+        StateVectorType state;
+    };
 
     /**
      * \brief Used during cell mapping algorithms.
@@ -100,6 +111,7 @@ namespace cm {
     private:
         StateVectorType imageState; // Top-left corners
         std::vector<IDType> otherCorners; // Cell IDs referencing other corners
+        std::vector<std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>> sequenceIds;
     public:
         ICMCell() : SCMCell<IDType>() {}
         StateVectorType getImageState() const {
@@ -113,6 +125,12 @@ namespace cm {
         }
         const std::vector<IDType>& getOtherCorners() const {
             return otherCorners;
+        }
+        void addNode(const std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>& node) {
+            sequenceIds.push_back(node);
+        }
+        const std::vector<std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>>& getSequenceIds() const {
+            return sequenceIds;
         }
 
     };

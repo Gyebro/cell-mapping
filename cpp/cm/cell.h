@@ -7,16 +7,6 @@
 
 namespace cm {
 
-    template <class IDType, class StateVectorType>
-        struct IcmGraphNode {
-        std::shared_ptr<IcmGraphNode> image;
-        std::shared_ptr<IcmGraphNode> parent;
-        IDType group;
-        IDType step;
-        IDType sequence;
-        StateVectorType state;
-    };
-
     /**
      * \brief Used during cell mapping algorithms.
      */
@@ -24,6 +14,17 @@ namespace cm {
         Untouched,
         UnderProcessing,
         Processed
+    };
+
+    template <class IDType, class StateVectorType>
+        struct IcmGraphNode {
+        std::shared_ptr<IcmGraphNode> image;
+        std::shared_ptr<IcmGraphNode> parent;
+        IDType sequence; // TODO: Remove this member
+        IDType group;  /// Group number of this cell
+        IDType step;   /// Step number of this cell (0 for periodic cells, positive for transient cells)
+        StateVectorType state;
+        CellState cState;
     };
 
     /**

@@ -43,7 +43,7 @@ int main() {
     SCMDefaultColoring<ICM_t, uint32_t> coloringMethod0;
     SCMBlackAndWhiteColoring<ICM_t, uint32_t> coloringMethod1;
     SCMHeatMapColoring<ICM_t, uint32_t> coloringMethod2;
-    icm.solve(1000, 0.05, 0.1);
+    icm.build_graph(1000, 0.05, 0.1);
     auto stop = high_resolution_clock::now();
     auto duration_s = duration_cast<seconds>(stop - start);
     auto duration_ms = duration_cast<milliseconds>(stop - start);

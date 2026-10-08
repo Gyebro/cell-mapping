@@ -44,7 +44,7 @@ namespace cm {
         }
         // TODO: Maybe there is no need to differentiate the two lambdas
         // TODO: Question for paper: what if lambda is increased above 1?
-        void solve(size_t max_steps = 500, double lambda_closure = 0.1, double lambda_join = 0.2) {
+        void build_graph(size_t max_steps = 500, double lambda_closure = 0.1, double lambda_join = 0.2) {
             // Calculate images
             std::cout << "Initializing Cell state space with " << css.getCellSum() << " cells, OMP parallel workers: " << omp_get_max_threads() << "\n";
             std::cout << "Integration step...\n";
@@ -68,57 +68,61 @@ namespace cm {
                 auto corners = css.getPositiveNeighbours(i);
                 css.getCell(i).setOtherCorners(corners);
             }
-            std::cout << "Solving ICM on the state space (interpolation step)...\n";
-            periodicGroups = 0;
-            periodicities.resize(0);
-            periodicGroupMaps.clear();
-            // Determine cell evolutions for cells
-            //IDType z,p,s;
-            bool processing;
-            // Store the first PG (sink cell)
-            size_t stat_periodic = 0;
-            size_t stat_transient_join = 0;
-            size_t stat_maxsteps = 0;
-            size_t stat_sink = 0;
+            std::cout << "Generating graph " << std::endl;
+            //periodicGroupMaps.clear();
             IDType sequence_id = 0;
-            IDType neighbour_seq = 0;
+            IDType joined_sequence = 0; // TODO: Remove
+            //IDType neighbour_seq = 0;
             double characteristicCellSize = norm(css.getCellWidth());
             double join_distance = lambda_join * characteristicCellSize;
             double periodicity_distance = lambda_closure * characteristicCellSize;
             double group_merge_distance = 1.0 * characteristicCellSize;
-            IDType group = SINK_GROUP+1;
-            IDType joined_group = 0;
-            IDType joined_step = 0;
+            IDType total_new_nodes = 0;
             IcmGraph.resize(0);
             IDType stats = css.getCellSum()/100;
+            std::shared_ptr<IcmGraphNode<IDType, StateVectorType>> Sink = std::make_shared<IcmGraphNode<IDType, StateVectorType>>(); total_new_nodes++;
+            Sink->image = Sink;
+            Sink->parent = Sink;
+            Sink->sequence = sequence_id;
+            IcmGraph.push_back(Sink);
+            size_t has_parent_chk = 1;
+            // Stats
+            size_t stat_periodic = 0;
+            size_t stat_transient_join = 0;
+            size_t stat_maxsteps = 0;
+            size_t stat_sink = 0;
             for (IDType i = 1; i < css.getCellSum(); i++) {
-                sequence_id = i;
+                // Start new sequence
+                sequence_id++;
                 if (i % stats == 0) {
                     std::cout << "Progress: " << i << "/" << css.getCellSum() << std::endl;
                     std::cout << "Current graph size: " << IcmGraph.size() << std::endl;
                     std::cout << "Current expansion: " << static_cast<double>(IcmGraph.size())/static_cast<double>(i) << std::endl;
                 }
                 // Start a sequence starting from cell 'i'
+                std::vector<std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>> seq;
                 StateVectorType state = css.getCenter(i);
-                std::shared_ptr<IcmGraphNode<IDType, StateVectorType>> node = std::make_shared<IcmGraphNode<IDType, StateVectorType>>();
-                IcmGraph.push_back(node);
+                std::shared_ptr<IcmGraphNode<IDType, StateVectorType>> node = std::make_shared<IcmGraphNode<IDType, StateVectorType>>(); total_new_nodes++;
                 node->state = state;
                 node->sequence = sequence_id;
+                node->parent = nullptr;
                 css.addNode(i, node);
                 StateVectorType newState;
-                std::vector<std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>> seq;
                 seq.push_back(node);
                 bool terminated = false;
-                TerminationState terminationState = TerminationState::Unknown;
+                TerminationState terminationState = TerminationState::Unknown; // TODO: Remove
                 double distance = 0;
                 bool enable_sequence_matching = true;
                 // Interpolate path until one of the termination conditions are met
+                std::shared_ptr<IcmGraphNode<IDType, StateVectorType>> parent = node;
                 for (IDType steps = 0; steps < max_steps; steps++) {
                     if (css.interpolate(state, newState)) {
-                        // Create new node
-                        std::shared_ptr<IcmGraphNode<IDType, StateVectorType>> newNode = std::make_shared<IcmGraphNode<IDType, StateVectorType>>();
+                        // Create new node for the new State
+                        std::shared_ptr<IcmGraphNode<IDType, StateVectorType>> newNode = std::make_shared<IcmGraphNode<IDType, StateVectorType>>(); total_new_nodes++;
                         newNode->state = newState;
                         newNode->sequence = sequence_id;
+                        newNode->parent = parent; has_parent_chk++;
+                        parent->image = newNode;
                         // Tag cells with sequence
                         css.addNode(css.getID(newState), newNode);
                         // Check termination vs current sequence
@@ -127,178 +131,125 @@ namespace cm {
                                 // Break cycle, mark as periodic
                                 terminated = true;
                                 terminationState = TerminationState::Periodic;
-                                // TODO: Build stats / debug
+                                stat_periodic += seq.size()+1; // Account for the current node
+                                newNode->image = s;
+                                // Note: s already has a parent
                             }
                         }
-                        // Store into sequence
+                        // Store into current sequence
                         seq.push_back(newNode);
-                        IcmGraph.push_back(node);
                         if (!terminated) {
                             // Check termination vs previously marked paths
                             std::shared_ptr<IcmGraphNode<IDType, StateVectorType>> join_node = nullptr;
                             distance = css.getClosestMatch(newState, sequence_id, join_node);
+                            //if (join_node) {
+                            //    std::cout << "Closest seq: " << join_node->sequence << " at " << distance << std::endl;
+                            //}
                             if (enable_sequence_matching && (distance <= join_distance)) {
                                 terminated = true;
                                 terminationState = TerminationState::TransientJoining;
-                                // TODO: Build stats / debug
-                                joined_group = join_node->group;
-                                joined_step = join_node->step;
+                                stat_transient_join += seq.size();
+                                newNode->image = join_node;
+                                // Note: join node already has parent
+                                joined_sequence = join_node->sequence;
+                                // TODO: Re-tag sequence (probably not needed)
                             }
                         }
                         // Update state
                         state = newState;
+                        parent = newNode;
                         if (terminated) {
+                            // Store sequence into graph
+                            for (auto n : seq) {
+                                IcmGraph.push_back(n);
+                            }
                             break;
                         }
                     } else { // Left region / entered sink cell
                         terminated = true;
                         terminationState = TerminationState::Sink;
-                        // TODO: Build stats / debug
+                        seq.back()->image = Sink;
+                        // Store sequence into graph
+                        for (auto n : seq) {
+                            IcmGraph.push_back(n);
+                        }
+                        stat_sink += seq.size();
                         break;
                     }
                 }
                 if (!terminated) {
+                    std::cout << "Maxsteps reached" << std::endl;
                     terminationState = TerminationState::MaxSteps;
-                }
-                // At this point, the new sequence starting from cell 'i' has one of four possible termination conditions
-
-                if (terminationState == TerminationState::Periodic) {
-                    // 1 - New periodic group / sequence
-                    //std::cout << "New periodic group: " << group << std::endl;
-                    // Check for 'neighbouring' PG based on stored sequences
-                    bool match = false;
-                    IDType matchedGroup = SINK_GROUP;
-                    double closest = 1000000.0;
-                    IDType closestGroup = SINK_GROUP;
-                    for (auto pg : periodicGroupMaps) {
-                        IDType group = pg.first;
-                        for (auto st : pg.second) {
-                            for (auto& s : seq) {
-                                // TODO: Use another distance / tolerance
-                                double dist = norm(st - s->state);
-                                if (dist < closest) {
-                                    closest = dist;
-                                    closestGroup = group;
-                                }
-                                if (dist <= group_merge_distance) {
-                                    match = true;
-                                    if (group == SINK_GROUP) {
-                                        match = false;
-                                    }
-                                }
-                                if (match) break;
-                            }
-                            if (match) break;
-                        }
-                        if (match) {
-                            matchedGroup = group;
-                        }
+                    seq.back()->image = Sink; // TODO: Find a better way. Currently tag with Sink.
+                    // Store sequence into graph
+                    for (auto n : seq) {
+                        IcmGraph.push_back(n);
                     }
-                    IDType restoredGroup = group; // This group number will be restored
-                    if (match) {
-                        group = matchedGroup;
-                    }
-                    // Tag sequence
-                    for (auto& s : seq) {
-                        s->group = group;
-                        s->step = 0; // TODO: Unwind and calculate steps
-                        stat_periodic++;
-                    }
-                    css.getCell(i).setGroup(group);
-                    css.getCell(i).setStep(seq.size());
-                    if (match) {
-                        std::cout << "Added new PG into " << group << std::endl;
-                        std::cout << "Periodicities [" << periodicities.size() << "]: " << std::endl;
-                        for (size_t p = 0; p < periodicities.size(); p++) {
-                            std::cout << periodicities[p] << " " << std::endl;
-                        }
-                        std::cout << "Increased periodicity from " << periodicities[matchedGroup-1] << " to ";
-                        periodicities[matchedGroup-1]+=seq.size();
-                        std::cout << periodicities[matchedGroup-1] << std::endl;
-                        if (periodicGroupMaps.contains(matchedGroup)) {
-                            for (auto& s : seq) {
-                                periodicGroupMaps[matchedGroup].push_back(s->state);
-                            }
-                        } else {
-                            std::cout << "ERROR: Cannot extend matched PG's map" << std::endl;
-                        }
-                        group = restoredGroup;
-                    } else {
-                        std::cout << "New PG " << group << std::endl;
-                        if (closestGroup == SINK_GROUP) {
-                            std::cout << "Closest neighbouring group: NONE/SINK" << std::endl;
-                        } else {
-                            std::cout << "Closest neighbouring group: " << closestGroup << ", dist: " << closest << std::endl;
-                        }
-                        // Save periodicity and insert state sequence into PG maps
-                        periodicities.push_back(seq.size());
-                        std::cout << "Periodicities [" << periodicities.size() << "]: " << std::endl;
-                        for (size_t p = 0; p < periodicities.size(); p++) {
-                            std::cout << periodicities[p] << " " << std::endl;
-                        }
-                        std::vector<StateVectorType> newPG;
-                        for (auto& s : seq) {
-                            newPG.push_back(s->state);
-                        }
-                        periodicGroupMaps.insert(std::make_pair(group, newPG));
-                        // Increment group number for future grops
-                        group++;
-                    }
-                } else if (terminationState == TerminationState::TransientJoining) {
-                    // 2 - Joining to previously classified sequence
-                    //std::cout << "Transient joining to group: " << joined_group << std::endl;
-                    for (auto& s : seq) {
-                        s->group = joined_group;
-                        s->step = joined_step+seq.size(); // TODO: Unwind and calculate steps
-                        stat_transient_join++;
-                    }
-                    css.getCell(i).setGroup(joined_group);
-                    css.getCell(i).setStep(joined_step+seq.size());
-                } else if (terminationState == TerminationState::Sink) {
-                    // 3 - Transient sequence to sink
-                    //std::cout << "Sequence leading to sink" << std::endl;
-                    for (auto& s : seq) {
-                        s->group = SINK_GROUP;
-                        s->step = 0; // TODO: Unwind and calculate steps
-                        stat_sink++;
-                    }
-                    css.getCell(i).setGroup(SINK_GROUP);
-                    css.getCell(i).setStep(seq.size());
-                } else if (terminationState == TerminationState::MaxSteps) {
-                    // 4 - Max steps reached (transient)
-                    //std::cout << "Undetermined sequence (maxsteps)" << std::endl;
-                    for (auto& s : seq) {
-                        s->group = UNDETERMINED_GROUP;
-                        s->step = 0; // TODO: Unwind and calculate steps
-                        stat_maxsteps++;
-                    }
-                    css.getCell(i).setGroup(UNDETERMINED_GROUP);
-                    css.getCell(i).setStep(seq.size());
+                    stat_maxsteps += seq.size();
                 }
             }
+            std::cout << "Expansion rate: " << static_cast<double>(IcmGraph.size())/static_cast<double>(css.getCellSum()) << std::endl;
+            size_t has_parent = 0;
+            size_t has_image = 0;
+            size_t has_sequence = 0;
+            size_t roots = 0;
+            for (auto n : IcmGraph) {
+                if (n->parent) {
+                    has_parent++;
+                } else {
+                    roots++;
+                }
+                if (n->image) has_image++;
+                if (n->sequence != 0) has_sequence++;
+            }
+            // Note: 2026.10.08: All stats are passing
+            std::cout << "Total new nodes created: " << total_new_nodes << std::endl;
+            std::cout << "Size of graph: " << IcmGraph.size() << std::endl;
+            std::cout << "Has image: " << has_image << " " << (static_cast<double>(has_image)*100.0/IcmGraph.size()) << "%" << std::endl;
+            std::cout << "Has sequence: " << has_sequence+1 << " " << (static_cast<double>(has_sequence+1)*100.0/IcmGraph.size()) << "%" << std::endl; // Note: +1 for Sink with 0 seqID
+            std::cout << "Has parent: " << has_parent << " (chk: " << has_parent_chk << ")" << " (roots: " << roots << ")" << std::endl;
             std::cout << " Periodic: " << stat_periodic << std::endl;
             std::cout << " Transient join: " << stat_transient_join << std::endl;
             std::cout << " Transient (maxsteps): " << stat_maxsteps << std::endl;
             std::cout << " Transient (sink): " << stat_sink << std::endl;
-            auto stat_sum = stat_periodic+stat_transient_join+stat_maxsteps+stat_sink;
-            std::cout << "TOTAL: " << stat_sum << std::endl;
-            std::cout << "Total number of nodes: " << IcmGraph.size() << std::endl;
-            std::cout << "Check: " << ((stat_sum == IcmGraph.size()) ? "OK" : "Error") << std::endl;
-            std::cout << "Expansion rate: " << static_cast<double>(IcmGraph.size())/static_cast<double>(css.getCellSum()) << std::endl;
-            /*for (IDType i = 0; i < css.getCellSum(); i++) {
-                z = i;
-                if (css.getCell(z).getState() == CellState::Untouched) {
-                    css.getCell(z).setState(CellState::UnderProcessing);
+            auto stat_sum = stat_periodic+stat_transient_join+stat_maxsteps+stat_sink+1; // Note: +1 for Sink node (no graph traversal classification)
+            std::cout << "Total stat sum: " << stat_sum << " ?= " << IcmGraph.size() << std::endl;
+            if (stat_sum != IcmGraph.size()) {
+                std::cout << " Diff (graph - stats): " << IcmGraph.size() - stat_sum << std::endl;
+            }
+        }
+        void solve() {
+            // Calculate images
+            std::cout << "Running SCM on graph with " << IcmGraph.size() << " nodes\n";
+            periodicGroups = 0;
+            periodicities.resize(0);
+            // Determine cell evolutions for cells
+            std::shared_ptr<IcmGraphNode<IDType, StateVectorType>> z,s;
+            IDType p;
+            bool processing;
+            std::vector<std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>> sequence;
+            std::vector<std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>> newPG;
+            // Store the first PG (sink cell)
+            newPG.push_back(0);
+            bool css = false;
+            // TODO: initialize state of sink!!!
+            for (auto n : IcmGraph) {
+                z = n;
+                if (z->cState == CellState::Untouched) {
+                    z->cState = CellState::UnderProcessing;
                     processing = true;
                     sequence.resize(0);
                     sequence.push_back(z);
                     // Start processing sequence for i
                     while (processing) {
-                        z = css.getImage(z);
-                        switch (css.getCell(z).getState()) {
+                        z = z->image;
+                        if (!z->image) {
+                            std::cout << "Critical error, no image!" << std::endl;
+                        }
+                        switch (z->cState) {
                             case CellState::Untouched:
                                 // Mark cell as under processing, store in the sequence then continue
-                                css.getCell(z).setState(CellState::UnderProcessing);
+                                z->cState = CellState::UnderProcessing;
                                 sequence.push_back(z);
                                 break;
                             case CellState::UnderProcessing:
@@ -316,53 +267,38 @@ namespace cm {
                                 newPG.resize(0);
                                 // Set properties for periodic cells,
                                 for (size_t j=0; j<p; j++) {
-                                    css.setGroup(sequence[s-1-j], periodicGroups-1);
-                                    css.setStep(sequence[s-1-j], 0);
-                                    css.getCell(sequence[s-1-j]).setState(CellState::Processed);
+                                    sequence[s-1-j]->group = periodicGroups-1;
+                                    sequence[s-1-j]->step = 0;
+                                    sequence[s-1-j]->cState = CellState::Processed;
                                     newPG.push_back(sequence[s-1-j]);
                                 }
-                                // Add current PG to the container
-                                periodicGroupIDs.push_back(newPG);
                                 // Set properties for transient cells
                                 for (size_t j=p; j<s; j++) {
-                                    css.setGroup(sequence[s-1-j], periodicGroups-1);
-                                    css.setStep(sequence[s-1-j], j-p+1);
-                                    css.getCell(sequence[s-1-j]).setState(CellState::Processed);
+                                    sequence[s-1-j]->group = periodicGroups-1;
+                                    sequence[s-1-j]->step = j-p+1;
+                                    sequence[s-1-j]->cState = CellState::Processed;
                                 }
                                 break;
                             case CellState::Processed:
                                 // A set of transient cells leading to an already processed cell
                                 processing = false;
                                 s = sequence.size();
-                                p = css.getGroup(z);
-                                IDType step = css.getStep(z);
+                                p = z->group;
+                                IDType step = z->step;
                                 for(size_t j=0; j<s; j++) {
-                                    css.setGroup(sequence[s-1-j], p);
-                                    css.setStep(sequence[s-1-j], step+1+j);
-                                    css.getCell(sequence[s-1-j]).setState(CellState::Processed);
+                                    sequence[s-1-j]->group = p;
+                                    sequence[s-1-j]->step = step+1+j;
+                                    sequence[s-1-j]->cState = CellState::Processed;
                                 }
                                 break;
                         }
                     }
                 }
-                else if (css.getCell(z).getState() == CellState::Processed) {
+                else if (z->cState == CellState::Processed) {
                     // Skip the cell (already processed)
                 }
             } // end for
-            */
-            periodicGroups = group;
             std::cout << "Number of PGs: " << periodicGroups << std::endl;
-            std::cout << "Periodicities: " << std::endl;
-            int firstLast = 25;
-            bool ellipsesPrinted = false;
-            for (int i=0; i<static_cast<int>(periodicities.size()); i++) {
-                if (i < firstLast || i >= periodicities.size()-firstLast) {
-                    std::cout << periodicities[i] << std::endl;
-                } else if (!ellipsesPrinted) {
-                    std::cout << "..." << std::endl;
-                    ellipsesPrinted = true;
-                }
-            }
         }
         void exportGroups(std::string filename, IDType dim) {
             std::ofstream out(filename);

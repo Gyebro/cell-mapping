@@ -31,16 +31,19 @@ namespace cm {
         ICMUniformCellStateSpace<CellType, IDType, StateVectorType> css;
         DynamicalSystemBase<StateVectorType> *systemPointer;
         IDType periodicGroups;
-        std::vector<std::vector<IDType>> periodicGroupIDs;
+        std::map<IDType, std::vector<StateVectorType>> periodicGroupMaps;
         std::vector<IDType> periodicities;
+        std::vector<std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>> IcmGraph;
     public:
         ICM(StateVectorType center, StateVectorType width, const std::vector<IDType>& cellCounts,
             DynamicalSystemBase<StateVectorType> *systemPointer) :
             css(center, width, cellCounts), systemPointer(systemPointer) {
             periodicGroups = 0;
             periodicities.resize(0);
-            periodicGroupIDs.resize(0);
+            periodicGroupMaps.clear();
         }
+        // TODO: Maybe there is no need to differentiate the two lambdas
+        // TODO: Question for paper: what if lambda is increased above 1?
         void solve(size_t max_steps = 500, double lambda_closure = 0.1, double lambda_join = 0.2) {
             // Calculate images
             std::cout << "Initializing Cell state space with " << css.getCellSum() << " cells, OMP parallel workers: " << omp_get_max_threads() << "\n";
@@ -68,7 +71,7 @@ namespace cm {
             std::cout << "Solving ICM on the state space (interpolation step)...\n";
             periodicGroups = 0;
             periodicities.resize(0);
-            periodicGroupIDs.resize(0);
+            periodicGroupMaps.clear();
             // Determine cell evolutions for cells
             //IDType z,p,s;
             bool processing;
@@ -82,10 +85,11 @@ namespace cm {
             double characteristicCellSize = norm(css.getCellWidth());
             double join_distance = lambda_join * characteristicCellSize;
             double periodicity_distance = lambda_closure * characteristicCellSize;
+            double group_merge_distance = 1.0 * characteristicCellSize;
             IDType group = SINK_GROUP+1;
             IDType joined_group = 0;
             IDType joined_step = 0;
-            std::vector<std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>> IcmGraph;
+            IcmGraph.resize(0);
             IDType stats = css.getCellSum()/100;
             for (IDType i = 1; i < css.getCellSum(); i++) {
                 sequence_id = i;
@@ -161,6 +165,40 @@ namespace cm {
                 if (terminationState == TerminationState::Periodic) {
                     // 1 - New periodic group / sequence
                     //std::cout << "New periodic group: " << group << std::endl;
+                    // Check for 'neighbouring' PG based on stored sequences
+                    bool match = false;
+                    IDType matchedGroup = SINK_GROUP;
+                    double closest = 1000000.0;
+                    IDType closestGroup = SINK_GROUP;
+                    for (auto pg : periodicGroupMaps) {
+                        IDType group = pg.first;
+                        for (auto st : pg.second) {
+                            for (auto& s : seq) {
+                                // TODO: Use another distance / tolerance
+                                double dist = norm(st - s->state);
+                                if (dist < closest) {
+                                    closest = dist;
+                                    closestGroup = group;
+                                }
+                                if (dist <= group_merge_distance) {
+                                    match = true;
+                                    if (group == SINK_GROUP) {
+                                        match = false;
+                                    }
+                                }
+                                if (match) break;
+                            }
+                            if (match) break;
+                        }
+                        if (match) {
+                            matchedGroup = group;
+                        }
+                    }
+                    IDType restoredGroup = group; // This group number will be restored
+                    if (match) {
+                        group = matchedGroup;
+                    }
+                    // Tag sequence
                     for (auto& s : seq) {
                         s->group = group;
                         s->step = 0; // TODO: Unwind and calculate steps
@@ -168,7 +206,44 @@ namespace cm {
                     }
                     css.getCell(i).setGroup(group);
                     css.getCell(i).setStep(seq.size());
-                    group++;
+                    if (match) {
+                        std::cout << "Added new PG into " << group << std::endl;
+                        std::cout << "Periodicities [" << periodicities.size() << "]: " << std::endl;
+                        for (size_t p = 0; p < periodicities.size(); p++) {
+                            std::cout << periodicities[p] << " " << std::endl;
+                        }
+                        std::cout << "Increased periodicity from " << periodicities[matchedGroup-1] << " to ";
+                        periodicities[matchedGroup-1]+=seq.size();
+                        std::cout << periodicities[matchedGroup-1] << std::endl;
+                        if (periodicGroupMaps.contains(matchedGroup)) {
+                            for (auto& s : seq) {
+                                periodicGroupMaps[matchedGroup].push_back(s->state);
+                            }
+                        } else {
+                            std::cout << "ERROR: Cannot extend matched PG's map" << std::endl;
+                        }
+                        group = restoredGroup;
+                    } else {
+                        std::cout << "New PG " << group << std::endl;
+                        if (closestGroup == SINK_GROUP) {
+                            std::cout << "Closest neighbouring group: NONE/SINK" << std::endl;
+                        } else {
+                            std::cout << "Closest neighbouring group: " << closestGroup << ", dist: " << closest << std::endl;
+                        }
+                        // Save periodicity and insert state sequence into PG maps
+                        periodicities.push_back(seq.size());
+                        std::cout << "Periodicities [" << periodicities.size() << "]: " << std::endl;
+                        for (size_t p = 0; p < periodicities.size(); p++) {
+                            std::cout << periodicities[p] << " " << std::endl;
+                        }
+                        std::vector<StateVectorType> newPG;
+                        for (auto& s : seq) {
+                            newPG.push_back(s->state);
+                        }
+                        periodicGroupMaps.insert(std::make_pair(group, newPG));
+                        // Increment group number for future grops
+                        group++;
+                    }
                 } else if (terminationState == TerminationState::TransientJoining) {
                     // 2 - Joining to previously classified sequence
                     //std::cout << "Transient joining to group: " << joined_group << std::endl;
@@ -277,6 +352,17 @@ namespace cm {
             */
             periodicGroups = group;
             std::cout << "Number of PGs: " << periodicGroups << std::endl;
+            std::cout << "Periodicities: " << std::endl;
+            int firstLast = 25;
+            bool ellipsesPrinted = false;
+            for (int i=0; i<static_cast<int>(periodicities.size()); i++) {
+                if (i < firstLast || i >= periodicities.size()-firstLast) {
+                    std::cout << periodicities[i] << std::endl;
+                } else if (!ellipsesPrinted) {
+                    std::cout << "..." << std::endl;
+                    ellipsesPrinted = true;
+                }
+            }
         }
         void exportGroups(std::string filename, IDType dim) {
             std::ofstream out(filename);
@@ -402,6 +488,91 @@ namespace cm {
                     buffer[buff_p+2]= rgb[2];
                 }
             }
+
+            size_t dest_p;
+            char r, g, b;
+            std::vector<char> mult_buffer(xw*yw*components*mult);
+            /**
+             * multiplied buffer contains xw*mult pixels per line (xw*mult*components bytes)
+             * but still yw lines
+             */
+            for (size_t i=0; i<yw; i++) {
+                for (size_t j=0; j<xw; j++) {
+                    // source pointer
+                    buff_p = (i*xw+j)*components;
+                    r = buffer[buff_p];
+                    g = buffer[buff_p+1];
+                    b = buffer[buff_p+2];
+                    for (size_t m=0; m<mult; m++) {
+                        dest_p = (i*xw*mult+mult*j+m)*components;
+                        mult_buffer[dest_p] = r;
+                        mult_buffer[dest_p+1] = g;
+                        mult_buffer[dest_p+2] = b;
+                    }
+                }
+            }
+
+            cinfo.err = jpeg_std_error(&jerr);
+            jpeg_create_compress(&cinfo);
+            jpeg_stdio_dest(&cinfo, outfile);
+            cinfo.image_width      = (JDIMENSION) xw*mult;
+            cinfo.image_height     = (JDIMENSION) yw*mult;
+            cinfo.input_components = (int) components;
+            cinfo.in_color_space   = JCS_RGB;
+
+            jpeg_set_defaults(&cinfo);
+            jpeg_set_quality (&cinfo, 100, true); // Set the quality [0..100]
+            jpeg_start_compress(&cinfo, true);
+            JSAMPROW row_pointer;
+            size_t write_h = 0;
+            while (write_h < yw) {
+                row_pointer = (JSAMPROW) &(mult_buffer.data()[write_h * cinfo.image_width * cinfo.input_components]);
+                for (size_t m=0; m<mult; m++) { // Write lines m times
+                    jpeg_write_scanlines(&cinfo, &row_pointer, 1);
+                }
+                write_h++;
+            }
+            jpeg_finish_compress(&cinfo);
+        }
+        void generateImage2(std::string filepath, SCMColoringMethod<CellType, IDType>* coloringMethod=nullptr,
+                IDType x0=0, IDType y0=0, IDType xw=0, IDType yw=0, IDType mult=1) {
+            // Pre-render ICMgraph into an array
+            size_t expansion = 2;
+            if (xw == 0) xw = css.getCellCounts()[0]*expansion;
+            if (yw == 0) yw = css.getCellCounts()[1]*expansion;
+            size_t components = 3; // RGB
+            std::vector<char> buffer(xw*yw*components);
+            // Instantiate coloring method if not provided
+            SCMDefaultColoring<CellType, IDType> defaultColoring;
+            if (coloringMethod == nullptr) {
+                coloringMethod = &defaultColoring;
+            }
+            std::cout << "Generating JPG: " << filepath << std::endl;
+            FILE* outfile = fopen(filepath.c_str(), "wb");
+            if (outfile == NULL) {
+                std::cout << "Failed to open output file: " << filepath << std::endl;
+            }
+            struct jpeg_compress_struct cinfo;
+            struct jpeg_error_mgr       jerr;
+            // Initialize the image
+            size_t buff_p;
+            for (size_t i=0; i<yw; i++) {
+                for (size_t j=0; j<xw; j++) {
+                    buff_p = (i*xw+j)*components;
+                    buffer[buff_p]	= 255u;
+                    buffer[buff_p+1]= 255u;
+                    buffer[buff_p+2]= 255u;
+                }
+            }
+            // TODO: Finish this part (2026.09.17)
+            // 
+            // Határokat hogyan lehet megkapni?
+            //
+            // Ami fehéren marad, azzal még egy kört menni
+
+
+
+            // Loop through the graph and colour pixels
 
             size_t dest_p;
             char r, g, b;

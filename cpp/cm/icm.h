@@ -34,6 +34,7 @@ namespace cm {
         std::map<IDType, std::vector<StateVectorType>> periodicGroupMaps;
         std::vector<IDType> periodicities;
         std::vector<std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>> IcmGraph;
+        std::vector<StateVectorType> graphHoles;
     public:
         ICM(StateVectorType center, StateVectorType width, const std::vector<IDType>& cellCounts,
             DynamicalSystemBase<StateVectorType> *systemPointer) :
@@ -76,7 +77,7 @@ namespace cm {
             double characteristicCellSize = norm(css.getCellWidth());
             double join_distance = lambda_join * characteristicCellSize;
             double periodicity_distance = lambda_closure * characteristicCellSize;
-            double group_merge_distance = 1.0 * characteristicCellSize;
+            double group_merge_distance = 1.0 * characteristicCellSize; // TODO: Restore group merge
             IDType total_new_nodes = 0;
             IcmGraph.resize(0);
             IDType stats = css.getCellSum()/100;
@@ -221,18 +222,15 @@ namespace cm {
         void solve() {
             // Calculate images
             std::cout << "Running SCM on graph with " << IcmGraph.size() << " nodes\n";
-            periodicGroups = 0;
-            periodicities.resize(0);
+            // TODO: Proper initialization on first pass in ctor.
+            //periodicGroups = 0;
+            //periodicities.resize(0);
             // Determine cell evolutions for cells
-            std::shared_ptr<IcmGraphNode<IDType, StateVectorType>> z,s;
-            IDType p;
+            std::shared_ptr<IcmGraphNode<IDType, StateVectorType>> z;
+            IDType p, s;
             bool processing;
             std::vector<std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>> sequence;
-            std::vector<std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>> newPG;
-            // Store the first PG (sink cell)
-            newPG.push_back(0);
-            bool css = false;
-            // TODO: initialize state of sink!!!
+            // TODO: Initialize state of sink? (Not needed if first element in graph)
             for (auto n : IcmGraph) {
                 z = n;
                 if (z->cState == CellState::Untouched) {
@@ -263,14 +261,13 @@ namespace cm {
                                 }
                                 // Create new PG
                                 periodicities.push_back(p);
+                                std::cout << "New PG (" << periodicGroups << ") with P = " << p << std::endl;
                                 periodicGroups++;						// Increase group counter
-                                newPG.resize(0);
                                 // Set properties for periodic cells,
                                 for (size_t j=0; j<p; j++) {
                                     sequence[s-1-j]->group = periodicGroups-1;
                                     sequence[s-1-j]->step = 0;
                                     sequence[s-1-j]->cState = CellState::Processed;
-                                    newPG.push_back(sequence[s-1-j]);
                                 }
                                 // Set properties for transient cells
                                 for (size_t j=p; j<s; j++) {
@@ -299,6 +296,26 @@ namespace cm {
                 }
             } // end for
             std::cout << "Number of PGs: " << periodicGroups << std::endl;
+            // TODO: Remove the following debug check
+            size_t state_proc = 0;
+            size_t state_underproc = 0;
+            size_t state_untouched = 0;
+            for (const auto n : IcmGraph) {
+                switch (n->cState) {
+                    case CellState::Untouched:
+                        state_untouched++;
+                        break;
+                    case CellState::UnderProcessing:
+                        state_underproc++;
+                        break;
+                    case CellState::Processed:
+                        state_proc++;
+                        break;
+                }
+            }
+            std::cout << "Processed: " << state_proc << std::endl;
+            std::cout << "UnderProcessing: " << state_underproc << std::endl;
+            std::cout << "Untouched: " << state_untouched << std::endl;
         }
         void exportGroups(std::string filename, IDType dim) {
             std::ofstream out(filename);
@@ -470,12 +487,13 @@ namespace cm {
             }
             jpeg_finish_compress(&cinfo);
         }
-        void generateImage2(std::string filepath, SCMColoringMethod<CellType, IDType>* coloringMethod=nullptr,
-                IDType x0=0, IDType y0=0, IDType xw=0, IDType yw=0, IDType mult=1) {
+        void generateImage2(std::string filepath, SCMColoringMethod<CellType, IDType>* coloringMethod=nullptr) {
             // Pre-render ICMgraph into an array
             size_t expansion = 2;
-            if (xw == 0) xw = css.getCellCounts()[0]*expansion;
-            if (yw == 0) yw = css.getCellCounts()[1]*expansion;
+            IDType xw = css.getCellCounts()[0]*expansion;
+            IDType yw = css.getCellCounts()[1]*expansion;
+            std::vector<IDType> newGrid{xw, yw};
+            UniformCellStateSpace<uint8_t,IDType,StateVectorType> auxCss(css.getCenter(0), css.getWidth(), newGrid);
             size_t components = 3; // RGB
             std::vector<char> buffer(xw*yw*components);
             // Instantiate coloring method if not provided
@@ -500,60 +518,166 @@ namespace cm {
                     buffer[buff_p+2]= 255u;
                 }
             }
-            // TODO: Finish this part (2026.09.17)
-            // 
-            // Határokat hogyan lehet megkapni?
-            //
-            // Ami fehéren marad, azzal még egy kört menni
-
-
-
+            std::vector<IDType> indices;
             // Loop through the graph and colour pixels
-
-            size_t dest_p;
-            char r, g, b;
-            std::vector<char> mult_buffer(xw*yw*components*mult);
-            /**
-             * multiplied buffer contains xw*mult pixels per line (xw*mult*components bytes)
-             * but still yw lines
-             */
-            for (size_t i=0; i<yw; i++) {
-                for (size_t j=0; j<xw; j++) {
-                    // source pointer
-                    buff_p = (i*xw+j)*components;
-                    r = buffer[buff_p];
-                    g = buffer[buff_p+1];
-                    b = buffer[buff_p+2];
-                    for (size_t m=0; m<mult; m++) {
-                        dest_p = (i*xw*mult+mult*j+m)*components;
-                        mult_buffer[dest_p] = r;
-                        mult_buffer[dest_p+1] = g;
-                        mult_buffer[dest_p+2] = b;
+            size_t out_of_bounds = 0, invalid_indices = 0;
+            for (const auto n : IcmGraph) {
+                // Look up destination based on state
+                auto state = n->state;
+                bool ok = auxCss.getCellCoord(state, indices);
+                if (ok) {
+                    size_t i = indices[1];
+                    size_t j = indices[0];
+                    if (i < yw && j < xw) {
+                        i = (yw-1)-i;
+                        CellType cell;
+                        cell.setGroup(n->group);
+                        cell.setStep(n->step);
+                        std::vector<char> rgb = coloringMethod->createColor(cell, periodicGroups);
+                        buff_p = (i*xw+j)*components;
+                        buffer[buff_p]	= rgb[0];
+                        buffer[buff_p+1]= rgb[1];
+                        buffer[buff_p+2]= rgb[2];
+                        // Also mark cell
+                        auto cellID = auxCss.getID(state);
+                        auxCss.getCell(cellID) = 1U;
+                    } else {
+                        invalid_indices++;
                     }
+                } else {
+                    out_of_bounds++;
                 }
             }
-
+            std::cout << "Out of bounds nodes: " << out_of_bounds << std::endl;
+            std::cout << "Invalid image indices: " << invalid_indices << std::endl;
+            // Gather "gaps" in the rasterized image, and do another round of ICM interpolations starting from them
+            size_t gapsInImage = 0;
+            graphHoles.resize(0);
+            for (IDType c=1; c<auxCss.getCellSum(); c++) {
+                if (auxCss.getCell(c) == 0U) {
+                    gapsInImage++;
+                    graphHoles.push_back(auxCss.getCenter(c));
+                }
+            }
+            std::cout << "Gaps in generated image: " << gapsInImage << std::endl;
+            // Write JPEG
             cinfo.err = jpeg_std_error(&jerr);
             jpeg_create_compress(&cinfo);
             jpeg_stdio_dest(&cinfo, outfile);
-            cinfo.image_width      = (JDIMENSION) xw*mult;
-            cinfo.image_height     = (JDIMENSION) yw*mult;
+            cinfo.image_width      = (JDIMENSION) xw;
+            cinfo.image_height     = (JDIMENSION) yw;
             cinfo.input_components = (int) components;
             cinfo.in_color_space   = JCS_RGB;
-
             jpeg_set_defaults(&cinfo);
             jpeg_set_quality (&cinfo, 100, true); // Set the quality [0..100]
             jpeg_start_compress(&cinfo, true);
             JSAMPROW row_pointer;
             size_t write_h = 0;
             while (write_h < yw) {
-                row_pointer = (JSAMPROW) &(mult_buffer.data()[write_h * cinfo.image_width * cinfo.input_components]);
-                for (size_t m=0; m<mult; m++) { // Write lines m times
-                    jpeg_write_scanlines(&cinfo, &row_pointer, 1);
-                }
+                row_pointer = (JSAMPROW) &(buffer.data()[write_h * cinfo.image_width * cinfo.input_components]);
+                jpeg_write_scanlines(&cinfo, &row_pointer, 1);
                 write_h++;
             }
             jpeg_finish_compress(&cinfo);
+        }
+        void fill_graph(size_t max_steps = 500, double lambda_closure = 0.1, double lambda_join = 0.2) {
+            // TODO: Rework the class, so that it uses graphHoles as centers too in build_graph
+            // TODO: This function is mostly a copy-paste of the build_graph function currently
+
+            std::cout << "Filling gaps in ICM graph with " << graphHoles.size() << " new trajectories" << std::endl;
+            IDType sequence_id = 0;
+            double characteristicCellSize = norm(css.getCellWidth());
+            double join_distance = lambda_join * characteristicCellSize;
+            double periodicity_distance = lambda_closure * characteristicCellSize;
+            IDType stats = graphHoles.size()/100;
+            for (IDType h = 1; h < graphHoles.size(); h++) {
+                // Start new sequence
+                sequence_id++;
+                if (h % stats == 0) {
+                    std::cout << "Progress: " << h << "/" << graphHoles.size() << std::endl;
+                    std::cout << "Current graph size: " << IcmGraph.size() << std::endl;
+                }
+                // Start a sequence starting from hole i
+                std::vector<std::shared_ptr<IcmGraphNode<IDType, StateVectorType>>> seq;
+                StateVectorType state = graphHoles[h];
+                std::shared_ptr<IcmGraphNode<IDType, StateVectorType>> node = std::make_shared<IcmGraphNode<IDType, StateVectorType>>();
+                node->state = state;
+                node->sequence = sequence_id;
+                node->parent = nullptr;
+                css.addNode(h, node);
+                StateVectorType newState;
+                seq.push_back(node);
+                bool terminated = false;
+                TerminationState terminationState = TerminationState::Unknown; // TODO: Remove
+                double distance = 0;
+                bool enable_sequence_matching = true;
+                // Interpolate path until one of the termination conditions are met
+                std::shared_ptr<IcmGraphNode<IDType, StateVectorType>> parent = node;
+                std::shared_ptr<IcmGraphNode<IDType, StateVectorType>> Sink = IcmGraph[0]; // TODO: This assumption should be enforced
+                for (IDType steps = 0; steps < max_steps; steps++) {
+                    if (css.interpolate(state, newState)) {
+                        // Create new node for the new State
+                        std::shared_ptr<IcmGraphNode<IDType, StateVectorType>> newNode = std::make_shared<IcmGraphNode<IDType, StateVectorType>>();
+                        newNode->state = newState;
+                        newNode->sequence = sequence_id;
+                        newNode->parent = parent;
+                        parent->image = newNode;
+                        // Tag cells with sequence
+                        css.addNode(css.getID(newState), newNode);
+                        // Check termination vs current sequence
+                        for (const auto& s : seq) {
+                            if (norm(newState - s->state) < periodicity_distance) {
+                                // Break cycle, mark as periodic
+                                terminated = true;
+                                terminationState = TerminationState::Periodic;
+                                newNode->image = s;
+                                // Note: s already has a parent
+                            }
+                        }
+                        // Store into current sequence
+                        seq.push_back(newNode);
+                        if (!terminated) {
+                            // Check termination vs previously marked paths
+                            std::shared_ptr<IcmGraphNode<IDType, StateVectorType>> join_node = nullptr;
+                            distance = css.getClosestMatch(newState, sequence_id, join_node);
+                            if (enable_sequence_matching && (distance <= join_distance)) {
+                                terminated = true;
+                                terminationState = TerminationState::TransientJoining;
+                                newNode->image = join_node;
+                            }
+                        }
+                        // Update state
+                        state = newState;
+                        parent = newNode;
+                        if (terminated) {
+                            // Store sequence into graph
+                            for (auto n : seq) {
+                                IcmGraph.push_back(n);
+                            }
+                            break;
+                        }
+                    } else { // Left region / entered sink cell
+                        terminated = true;
+                        terminationState = TerminationState::Sink;
+                        seq.back()->image = Sink;
+                        // Store sequence into graph
+                        for (auto n : seq) {
+                            IcmGraph.push_back(n);
+                        }
+                        break;
+                    }
+                }
+                if (!terminated) {
+                    std::cout << "Maxsteps reached" << std::endl;
+                    terminationState = TerminationState::MaxSteps;
+                    seq.back()->image = Sink; // TODO: Find a better way. Currently tag with Sink.
+                    // Store sequence into graph
+                    for (auto n : seq) {
+                        IcmGraph.push_back(n);
+                    }
+                }
+            }
+            std::cout << "Final expansion rate: " << static_cast<double>(IcmGraph.size())/static_cast<double>(css.getCellSum()) << std::endl;
         }
         DynamicalSystemBase<StateVectorType> *getSystemPointer() const {
             return systemPointer;

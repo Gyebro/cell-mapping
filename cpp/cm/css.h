@@ -4,7 +4,7 @@
 #include "cell.h"
 #include <vector>
 #include <cmath>
-#include <oneapi/tbb/info.h>
+#include <cassert>
 
 namespace cm {
 
@@ -104,6 +104,25 @@ namespace cm {
                 }
             }
             return id;
+        }
+        bool getCellCoord(const StateVectorType& state, std::vector<IDType>& cellCoord) {
+            bool inside = true; // Out of state space bounds check
+            for (IDType i=0; i<dimension; i++) {
+                inside &= (center[i]-0.5*width[i] <= state[i]) && (state[i] < center[i]+0.5*width[i]);
+            }
+            if (!inside) {
+                return false;
+            }
+            cellCoord.resize(dimension);
+            for (IDType i=0; i<dimension; i++) {
+                IDType local = (IDType)floor((state[i] - (center[i]-0.5*width[i]))/cellWidth[i]);
+                assert(local <= cellCounts[i]);
+                cellCoord[i] = local;
+            }
+            return true;
+        }
+        const StateVectorType& getWidth() const {
+            return width;
         }
         CellType& getCellAtState(const StateVectorType& state) {
             return cells[getID(state)];
